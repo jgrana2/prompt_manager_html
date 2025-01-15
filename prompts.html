@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LLM Prompt Manager</title>
+  <link rel="stylesheet" href="https://cdn.tailwindcss.com"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Nunito:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    
+    /* Hide delete button by default, show on li hover */
+    .delete-btn {
+      display: none;
+    }
+    li:hover .delete-btn {
+      display: inline-block;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <header class="px-4 py-2 flex justify-between items-center bg-white shadow">
+    <h1 class="text-xl font-bold">LLM Prompt Manager</h1>
+    <button id="new-prompt-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+      New Prompt
+    </button>
+  </header>
+
+  <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-1/4 bg-white shadow p-4 overflow-y-auto">
+      <h2 class="text-lg font-bold mb-4">Saved Prompts:</h2>
+      <input 
+        id="search-bar" 
+        type="text" 
+        placeholder="Search prompts..." 
+        class="w-full p-2 mb-4 border border-gray-300 rounded" 
+      />
+      <ul class="list-none divide-y divide-gray-200" id="prompt-list"></ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="w-full md:flex-1 p-6 overflow-y-auto">
+      <div id="initial-instruction" class="text-gray-500 text-center mt-20">
+        Select a prompt on the left to start...
+      </div>
+
+      <div id="content-container" class="hidden">
+        <section class="bg-white shadow rounded p-4 mb-6">
+          <h2 class="text-lg font-bold mb-4">Prompt Details:</h2>
+          <div id="prompt-display" class="whitespace-pre-wrap text-gray-800"></div>
+        </section>
+
+        <section class="bg-white shadow rounded p-4 mb-6">
+          <h2 class="text-lg font-bold mb-4">Your Input:</h2>
+          <div id="dynamic-inputs" class="mb-4 space-y-2"></div>
+
+          <textarea 
+            id="user-input"
+            class="w-full p-2 border border-gray-300 rounded mb-4 text-lg" 
+            placeholder="Enter additional instructions or input..."
+            rows="4"
+          ></textarea>
+
+          <button 
+            id="run-button"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
+          >
+            Run
+          </button>
+
+          <div id="result-container" class="bg-gray-50 p-4 rounded border border-gray-200 mt-4 whitespace-pre-wrap"></div>
+          <button id="copy-button" class="hidden bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mt-4">
+            Copy Response
+          </button>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal for New Prompt -->
+  <div id="new-prompt-modal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded shadow-lg p-6 w-11/12 md:w-1/3">
+      <h3 class="text-xl font-bold mb-4">New Prompt</h3>
+      <textarea id="new-prompt-text" class="w-full p-2 border border-gray-300 rounded mb-4" rows="4" placeholder="Enter new prompt here..."></textarea>
+      <div class="flex justify-end space-x-2">
+        <button id="cancel-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Cancel</button>
+        <button id="save-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    // Element references
+    const promptList = document.getElementById('prompt-list');
+    const searchBar = document.getElementById('search-bar');
+    const newPromptBtn = document.getElementById('new-prompt-btn');
+    const newPromptModal = document.getElementById('new-prompt-modal');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const saveBtn = document.getElementById('save-btn');
+    const newPromptText = document.getElementById('new-prompt-text');
+    const promptDisplay = document.getElementById('prompt-display');
+    const dynamicInputsContainer = document.getElementById('dynamic-inputs');
+    const userInputField = document.getElementById('user-input');
+    const resultContainer = document.getElementById('result-container');
+    const copyButton = document.getElementById('copy-button');
+    const initialInstruction = document.getElementById('initial-instruction');
+    const contentContainer = document.getElementById('content-container');
+
+    const OPENAI_API_KEY = window.OPENAI_API_KEY;
+    const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+
+    function loadStoredPrompts() {
+      const stored = localStorage.getItem('savedPrompts');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          console.error('Error parsing stored prompts:', e);
+        }
+      }
+      return [];
+    }
+
+    function savePrompts(prompts) {
+      localStorage.setItem('savedPrompts', JSON.stringify(prompts));
+    }
+
+    let prompts = loadStoredPrompts();
+
+    function createPromptListItem(text) {
+      const li = document.createElement('li');
+      li.className = "py-2 flex justify-between items-center cursor-pointer hover:bg-gray-100";
+      li.setAttribute('data-prompt', text);
+
+      const span = document.createElement('span');
+      span.textContent = text.length > 40 ? text.slice(0, 40) + '...' : text;
+      li.appendChild(span);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = "delete-btn text-red-500 hover:text-red-700";
+      deleteBtn.title = "Delete Prompt";
+      deleteBtn.textContent = "🗑️";
+      li.appendChild(deleteBtn);
+
+      attachPromptClickHandler(li);
+
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const promptToDelete = li.getAttribute('data-prompt');
+        li.remove();
+        prompts = prompts.filter(p => p !== promptToDelete);
+        savePrompts(prompts);
+      });
+
+      return li;
+    }
+
+    prompts.forEach(text => {
+      const li = createPromptListItem(text);
+      promptList.appendChild(li);
+    });
+
+    function attachPromptClickHandler(item) {
+      item.addEventListener('click', function() {
+        if (initialInstruction.style.display !== 'none') {
+          initialInstruction.style.display = 'none';
+          contentContainer.classList.remove('hidden');
+        }
+
+        dynamicInputsContainer.innerHTML = '';
+        resultContainer.textContent = '';
+        copyButton.classList.add('hidden');
+
+        const promptText = this.getAttribute('data-prompt');
+        promptDisplay.textContent = promptText;
+
+        const inputRegex = /\${input\s*\d+}/g;
+        const inputsFound = promptText.match(inputRegex);
+
+        if (inputsFound) {
+          userInputField.style.display = 'none';
+          inputsFound.forEach((placeholder) => {
+            const inputField = document.createElement('input');
+            inputField.type = 'text';
+            inputField.placeholder = placeholder.replace('${', '').replace('}', '').trim();
+            inputField.className = "w-full p-2 border border-gray-300 rounded";
+            inputField.dataset.placeholder = placeholder; 
+            dynamicInputsContainer.appendChild(inputField);
+          });
+        } else {
+          userInputField.style.display = 'block';
+        }
+      });
+    }
+
+    async function sendPromptToOpenAI(promptText) {
+      const requestBody = {
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: promptText }],
+        stream: true
+      };
+
+      const response = await fetch(OPENAI_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.statusText}`);
+      }
+
+      return response.body;
+    }
+
+    function streamResponse(reader) {
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      function read() {
+        reader.read().then(({ done, value }) => {
+          if (done) return;
+
+          buffer += decoder.decode(value, { stream: true });
+          let lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (let line of lines) {
+            line = line.trim();
+            if (!line.startsWith('data: ')) continue;
+
+            let jsonStr = line.replace(/^data:\s*/, '');
+            if (jsonStr === '[DONE]') {
+              copyButton.classList.remove('hidden'); 
+              return;
+            }
+
+            try {
+              let parsed = JSON.parse(jsonStr);
+              let deltaContent = parsed.choices[0]?.delta?.content;
+              if (deltaContent) {
+                resultContainer.textContent += deltaContent;
+              }
+            } catch (e) {
+              console.error('Error parsing JSON:', e);
+            }
+          }
+          read();
+        }).catch(error => {
+          console.error("Error reading stream:", error);
+        });
+      }
+      read();
+    }
+
+    document.getElementById('run-button').addEventListener('click', async () => {
+      let promptText = promptDisplay.textContent;
+      const userInput = userInputField.value;
+
+      const inputRegex = /\${input\s*\d+}/g;
+      const inputsFound = promptText.match(inputRegex);
+
+      if (inputsFound) {
+        document.querySelectorAll('#dynamic-inputs input').forEach(input => {
+          const placeholder = input.dataset.placeholder;
+          promptText = promptText.replace(placeholder, input.value);
+        });
+      } else {
+        if (userInput.trim()) {
+          promptText += `: """\n${userInput}\n"""`;
+        }
+      }
+
+      resultContainer.textContent = '';
+      copyButton.classList.add('hidden');
+
+      try {
+        const stream = await sendPromptToOpenAI(promptText);
+        const reader = stream.getReader();
+        streamResponse(reader);
+      } catch (error) {
+        console.error(error);
+        resultContainer.textContent = "Error communicating with OpenAI API.";
+      }
+    });
+
+    copyButton.addEventListener('click', () => {
+      const textToCopy = resultContainer.textContent;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        copyButton.textContent = "Copied!";
+        setTimeout(() => copyButton.textContent = "Copy Response", 2000);
+      }).catch(err => {
+        console.error('Failed to copy text:', err);
+      });
+    });
+
+    newPromptBtn.addEventListener('click', () => {
+      newPromptModal.classList.remove('hidden');
+      newPromptText.focus();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      newPromptModal.classList.add('hidden');
+      newPromptText.value = '';
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const text = newPromptText.value.trim();
+      if (text) {
+        const newLi = createPromptListItem(text);
+        promptList.appendChild(newLi);
+
+        prompts.push(text);
+        savePrompts(prompts);
+
+        newPromptText.value = '';
+        newPromptModal.classList.add('hidden');
+      }
+    });
+
+    searchBar.addEventListener('input', () => {
+      const query = searchBar.value.toLowerCase();
+      document.querySelectorAll('#prompt-list li').forEach(li => {
+        const text = li.getAttribute('data-prompt').toLowerCase();
+        li.style.display = text.includes(query) ? '' : 'none';
+      });
+    });
+
+    // Add Enter key listener for textarea
+    userInputField.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('run-button').click();
+      }
+    });
+  </script>
+
+  <style>
+    @import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+    body { font-family: 'Nunito', sans-serif; }
+  </style>
+</body>
+</html>
