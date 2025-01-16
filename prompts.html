@@ -17,38 +17,158 @@
     li:hover .delete-btn {
       display: inline-block;
     }
+
     /* Style for message containers */
     .message {
       margin-bottom: 1rem;
-    }
-    .user-message {
-      text-align: right;
+      position: relative; /* For tooltip positioning */
+      display: flex;
+      align-items: flex-end;
     }
     .assistant-message {
-      text-align: left;
+      justify-content: flex-start;
     }
+    .user-message {
+      justify-content: flex-end;
+    }
+
+    /* Ensure HTML content breaks lines and styles correctly */
+    .assistant-message div,
+    .user-message div {
+      white-space: pre-wrap;
+      max-width: 80%;
+    }
+
+    /* Style for smaller run button */
+    .run-button {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.875rem;
+    }
+    
+    /* Scrollbar styling for conversation */
+    #conversation::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #conversation::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    #conversation::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+
+    #conversation::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    /* Optional: Add some padding to the conversation area */
+    #conversation {
+      padding-right: 1rem;
+      background: url('https://images.unsplash.com/photo-1517816428104-4aa4d8e97cdf?auto=format&fit=crop&w=1350&q=80') no-repeat center center;
+      background-size: cover;
+      border-radius: 8px;
+    }
+
+    /* Cursor pointer for clickable elements */
+    .clickable {
+      cursor: pointer;
+    }
+
+    /* Tooltip styling */
+    .tooltip {
+      visibility: hidden;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 4px;
+      padding: 4px 8px;
+      position: absolute;
+      z-index: 20;
+      bottom: 125%; /* Position above the element */
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.75rem;
+    }
+
+    .message.show-tooltip .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    /* Avatar Styles */
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 0.5rem;
+    }
+
+    .user-avatar {
+      margin-left: 0.5rem;
+      margin-right: 0;
+    }
+
+    /* Message Bubble Styles */
+    .message-content {
+      position: relative;
+      padding: 10px 14px;
+      border-radius: 20px;
+      max-width: 70%;
+      word-wrap: break-word;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.3s;
+    }
+
+    .assistant-content {
+      background-color: rgba(255, 255, 255, 0.8);
+      color: #333;
+    }
+
+    .user-content {
+      background-color: #3b82f6;
+      color: #fff;
+    }
+
+    /* Hover effect for clickable messages */
+    .clickable:hover .message-content {
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      #conversation {
+        background: url('https://images.unsplash.com/photo-1526045612212-70caf35c14df?auto=format&fit=crop&w=1350&q=80') no-repeat center center;
+        background-size: cover;
+      }
+    }
+
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
   <header class="px-4 py-2 flex justify-between items-center bg-white shadow">
-    <h1 class="text-xl font-bold">LLM Prompt Manager</h1>
-    <button id="new-prompt-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+    <h1 class="text-2xl font-bold text-blue-600">LLM Prompt Manager</h1>
+    <button id="new-prompt-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
       New Prompt
     </button>
   </header>
 
   <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
     <!-- Sidebar -->
-    <aside class="w-full md:w-1/4 bg-white shadow p-4 overflow-y-auto">
-      <h2 class="text-lg font-bold mb-4">Saved Prompts:</h2>
-      <div class="relative">
+    <aside class="w-full md:w-1/4 bg-white shadow p-6 overflow-y-auto">
+      <h2 class="text-xl font-bold mb-6 text-gray-800">Saved Prompts</h2>
+      <div class="relative mb-6">
         <input 
           id="search-bar" 
           type="text" 
           placeholder="Search prompts..." 
-          class="w-full p-2 pr-8 mb-4 border border-gray-300 rounded" 
+          class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <button id="clear-search" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 hidden">
+        <button id="clear-search" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 hidden">
           &times;
         </button>
       </div>
@@ -56,26 +176,37 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="w-full md:flex-1 p-6 overflow-y-auto">
+    <main class="w-full md:flex-1 p-8 overflow-y-auto flex flex-col bg-gradient-to-r from-blue-50 to-indigo-50">
       <div id="initial-instruction" class="text-gray-500 text-center mt-20">
-        Select a prompt on the left to start...
+        <p>Select a prompt on the left to start your conversation.</p>
       </div>
 
-      <div id="content-container" class="hidden">
-        <section class="bg-white shadow rounded p-4 mb-6">
-          <h2 class="text-lg font-bold mb-4">Prompt Details:</h2>
-          <div id="prompt-display" class="whitespace-pre-wrap text-gray-800"></div>
+      <div id="content-container" class="hidden flex-1 flex flex-col">
+        <section class="bg-white shadow-lg rounded-lg p-6 mb-6">
+          <h2 class="text-xl font-bold mb-4 text-gray-800">Prompt Details</h2>
+          <div id="prompt-display" class="whitespace-pre-wrap text-gray-700"></div>
         </section>
 
-        <section class="bg-white shadow rounded p-4 mb-6">
-          <h2 class="text-lg font-bold mb-2">Your Input:</h2>
-          <p class="text-sm text-gray-500 mb-4">Press Enter to run the prompt and Shift+Enter to create a new line.</p>
-          <div id="input-container" class="space-y-4">
-            <!-- Dynamic input sections will be appended here -->
-          </div>
+        <!-- Simplified User Input Section -->
+        <section class="bg-white shadow-lg rounded-lg p-6 mb-6 flex items-center space-x-4">
+          <input 
+            id="user-input"
+            type="text"
+            placeholder="Enter your input here..."
+            class="flex-1 p-3 border border-gray-300 rounded-lg text-lg clickable focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="User Input"
+          />
+          <button 
+            id="run-button"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300"
+          >
+            Run
+          </button>
+          <!-- Tooltip for user input copy -->
+          <div class="tooltip" id="user-input-tooltip">Copied!</div>
         </section>
 
-        <section id="conversation" class="space-y-4">
+        <section id="conversation" class="flex-1 overflow-y-auto p-4 rounded-lg shadow-inner">
           <!-- Conversation messages will be appended here -->
         </section>
       </div>
@@ -84,12 +215,16 @@
 
   <!-- Modal for New Prompt -->
   <div id="new-prompt-modal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden">
-    <div class="bg-white rounded shadow-lg p-6 w-11/12 md:w-1/3">
-      <h3 class="text-xl font-bold mb-4">New Prompt</h3>
-      <textarea id="new-prompt-text" class="w-full p-2 border border-gray-300 rounded mb-4" rows="4" placeholder="Enter new prompt here..."></textarea>
-      <div class="flex justify-end space-x-2">
-        <button id="cancel-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Cancel</button>
-        <button id="save-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save</button>
+    <div class="bg-white rounded-lg shadow-xl p-8 w-11/12 md:w-1/3">
+      <h3 class="text-2xl font-bold mb-6 text-gray-800">New Prompt</h3>
+      <textarea id="new-prompt-text" class="w-full p-4 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="5" placeholder="Enter new prompt here..."></textarea>
+      <div class="flex justify-end space-x-4">
+        <button id="cancel-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg">
+          Cancel
+        </button>
+        <button id="save-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">
+          Save
+        </button>
       </div>
     </div>
   </div>
@@ -106,10 +241,12 @@
     const saveBtn = document.getElementById('save-btn');
     const newPromptText = document.getElementById('new-prompt-text');
     const promptDisplay = document.getElementById('prompt-display');
-    const inputContainer = document.getElementById('input-container');
     const conversation = document.getElementById('conversation');
     const initialInstruction = document.getElementById('initial-instruction');
     const contentContainer = document.getElementById('content-container');
+    const userInputField = document.getElementById('user-input');
+    const runButton = document.getElementById('run-button');
+    const userInputTooltip = document.getElementById('user-input-tooltip');
 
     const OPENAI_API_KEY = window.OPENAI_API_KEY;
     const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
@@ -136,11 +273,12 @@
 
     function createPromptListItem(text) {
       const li = document.createElement('li');
-      li.className = "py-2 flex justify-between items-center cursor-pointer hover:bg-gray-100";
+      li.className = "py-3 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition duration-200 rounded-lg px-3";
       li.setAttribute('data-prompt', text);
 
       const span = document.createElement('span');
-      span.textContent = text.length > 40 ? text.slice(0, 40) + '...' : text;
+      span.textContent = text.length > 50 ? text.slice(0, 50) + '...' : text;
+      span.className = "text-gray-700";
       li.appendChild(span);
 
       const deleteBtn = document.createElement('button');
@@ -174,115 +312,92 @@
           contentContainer.classList.remove('hidden');
         }
 
-        inputContainer.innerHTML = '';
         conversation.innerHTML = '';
         messages = [];
 
         const promptText = this.getAttribute('data-prompt');
         promptDisplay.textContent = promptText;
 
-        const inputRegex = /\${input\s*\d+}/g;
-        const inputsFound = promptText.match(inputRegex);
+        // Initialize messages with system prompt
+        messages.push({ role: "system", content: promptText });
 
-        if (inputsFound) {
-          inputsFound.forEach((placeholder, index) => {
-            const inputSection = document.createElement('div');
-            inputSection.className = "flex flex-col";
+        // Clear input fields
+        userInputField.value = '';
 
-            const label = document.createElement('label');
-            label.textContent = placeholder.replace('${', '').replace('}', '').trim();
-            label.className = "mb-1 font-semibold";
-
-            const textarea = document.createElement('textarea');
-            textarea.className = "w-full p-2 border border-gray-300 rounded text-lg";
-            textarea.placeholder = placeholder.replace('${', '').replace('}', '').trim();
-            textarea.rows = 2;
-            textarea.dataset.index = index;
-
-            textarea.addEventListener('keydown', (e) => {
-              if(e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleRun(textarea);
-              }
-            });
-
-            inputSection.appendChild(label);
-            inputSection.appendChild(textarea);
-            inputContainer.appendChild(inputSection);
-          });
-        } else {
-          const inputSection = document.createElement('div');
-          inputSection.className = "flex flex-col";
-
-          const label = document.createElement('label');
-          label.textContent = "Input";
-          label.className = "mb-1 font-semibold";
-
-          const textarea = document.createElement('textarea');
-          textarea.id = "user-input";
-          textarea.className = "w-full p-2 border border-gray-300 rounded text-lg";
-          textarea.placeholder = "Enter additional instructions or input...";
-          textarea.rows = 2;
-
-          textarea.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleRun(textarea);
-            }
-          });
-
-          inputSection.appendChild(label);
-          inputSection.appendChild(textarea);
-          inputContainer.appendChild(inputSection);
-        }
-
-        // Initialize first input focus
-        const firstInput = inputContainer.querySelector('textarea');
-        if (firstInput) {
-          firstInput.focus();
-        }
+        // Focus on the main input field
+        userInputField.focus();
       });
     }
 
-    async function handleRun(textarea) {
-      const runButton = document.createElement('button');
-      runButton.className = "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded";
-      runButton.textContent = "Run";
-      runButton.disabled = true;
+    async function handleRun() {
+      // Gather user input
+      let userInput = userInputField.value.trim();
 
-      // Replace textarea with disabled textarea and run button
-      const parent = textarea.parentElement;
-      parent.replaceChild(runButton, textarea);
+      if (!userInput) {
+        alert("Please enter some input before running the prompt.");
+        return;
+      }
 
-      // Gather all inputs
-      let promptText = promptDisplay.textContent;
-      const inputTexts = inputContainer.querySelectorAll('textarea');
-      inputTexts.forEach((input, idx) => {
-        const placeholder = input.previousElementSibling.textContent;
-        promptText = promptText.replace(`\${input ${idx + 1}}`, input.value.trim());
-      });
+      // Append the user input with :""" and """
+      let formattedInput = `:"""${userInput}"""`;
+      
+      // Add user input to messages
+      messages.push({ role: "user", content: formattedInput });
 
-      // Add user message
+      // Append user message to conversation without :""" and """
       const userMessage = document.createElement('div');
-      userMessage.className = "message user-message";
-      userMessage.innerHTML = `<div class="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-lg"> ${promptText} </div>`;
+      userMessage.className = "message user-message clickable";
+      userMessage.innerHTML = `
+        <img src="https://i.pravatar.cc/40?img=3" alt="User Avatar" class="avatar user-avatar">
+        <div class="message-content user-content">
+          ${userInput}
+        </div>
+        <div class="tooltip">Copied!</div>
+      `;
       conversation.appendChild(userMessage);
       conversation.scrollTop = conversation.scrollHeight;
 
-      messages.push({ role: "user", content: promptText });
+      // Copy to clipboard when user message is clicked
+      userMessage.addEventListener('click', () => {
+        copyToClipboard(userInput, userMessage);
+      });
 
-      // Send to OpenAI
+      // Disable run button and show loading state
+      runButton.disabled = true;
+      runButton.textContent = "Running...";
+      runButton.classList.add('bg-blue-400', 'cursor-not-allowed');
+
       try {
         const stream = await sendPromptToOpenAI(messages);
         const reader = stream.getReader();
-        await streamResponse(reader, conversation);
+        await streamResponse(reader);
       } catch (error) {
         console.error(error);
         const errorMessage = document.createElement('div');
-        errorMessage.className = "message assistant-message";
-        errorMessage.innerHTML = `<div class="inline-block bg-red-100 text-red-800 px-4 py-2 rounded-lg">Error communicating with OpenAI API.</div>`;
+        errorMessage.className = "message assistant-message clickable";
+        errorMessage.innerHTML = `
+          <img src="https://i.pravatar.cc/40?img=5" alt="Assistant Avatar" class="avatar">
+          <div class="message-content assistant-content bg-red-100 text-red-800">
+            Error communicating with OpenAI API.
+          </div>
+          <div class="tooltip">Copied!</div>
+        `;
         conversation.appendChild(errorMessage);
         conversation.scrollTop = conversation.scrollHeight;
+
+        // Copy error message on click
+        errorMessage.addEventListener('click', () => {
+          copyToClipboard("Error communicating with OpenAI API.", errorMessage);
+        });
+      } finally {
+        // Re-enable run button
+        runButton.disabled = false;
+        runButton.textContent = "Run";
+        runButton.classList.remove('bg-blue-400', 'cursor-not-allowed');
+        runButton.classList.add('bg-blue-500', 'hover:bg-blue-700');
+
+        // Clear user input fields
+        userInputField.value = '';
       }
     }
 
@@ -309,21 +424,40 @@
       return response.body;
     }
 
-    function streamResponse(reader, conversation) {
+    function streamResponse(reader) {
       return new Promise((resolve, reject) => {
         const decoder = new TextDecoder();
         let buffer = '';
-        let assistantMessage = document.createElement('div');
-        assistantMessage.className = "message assistant-message";
-        const contentDiv = document.createElement('div');
-        contentDiv.className = "inline-block bg-gray-100 text-gray-800 px-4 py-2 rounded-lg";
-        assistantMessage.appendChild(contentDiv);
+        let assistantContent = '';
+
+        // Create assistant message container
+        const assistantMessage = document.createElement('div');
+        assistantMessage.className = "message assistant-message clickable";
+        assistantMessage.innerHTML = `
+          <img src="https://i.pravatar.cc/40?img=5" alt="Assistant Avatar" class="avatar">
+          <div class="message-content assistant-content">
+            <span class="loading-spinner">⏳</span>
+          </div>
+          <div class="tooltip">Copied!</div>
+        `;
         conversation.appendChild(assistantMessage);
         conversation.scrollTop = conversation.scrollHeight;
+
+        const contentDiv = assistantMessage.querySelector('.assistant-content');
+
+        // Event listener for copying assistant message
+        assistantMessage.addEventListener('click', () => {
+          copyToClipboard(assistantContent, assistantMessage);
+        });
 
         function read() {
           reader.read().then(({ done, value }) => {
             if (done) {
+              // Remove loading spinner and display content
+              contentDiv.innerHTML = assistantContent;
+              conversation.scrollTop = conversation.scrollHeight;
+              // Update messages with the full assistant response
+              messages.push({ role: "assistant", content: assistantContent });
               resolve();
               return;
             }
@@ -338,6 +472,10 @@
 
               let jsonStr = line.replace(/^data:\s*/, '');
               if (jsonStr === '[DONE]') {
+                // Remove loading spinner and display content
+                contentDiv.innerHTML = assistantContent;
+                conversation.scrollTop = conversation.scrollHeight;
+                messages.push({ role: "assistant", content: assistantContent });
                 resolve();
                 return;
               }
@@ -346,7 +484,8 @@
                 let parsed = JSON.parse(jsonStr);
                 let deltaContent = parsed.choices[0]?.delta?.content;
                 if (deltaContent) {
-                  contentDiv.textContent += deltaContent;
+                  assistantContent += deltaContent;
+                  contentDiv.innerHTML = assistantContent;
                   conversation.scrollTop = conversation.scrollHeight;
                 }
               } catch (e) {
@@ -360,6 +499,18 @@
           });
         }
         read();
+      });
+    }
+
+    function copyToClipboard(text, element) {
+      navigator.clipboard.writeText(text).then(() => {
+        // Show tooltip
+        element.classList.add('show-tooltip');
+        setTimeout(() => {
+          element.classList.remove('show-tooltip');
+        }, 1000);
+      }).catch(err => {
+        console.error('Could not copy text: ', err);
       });
     }
 
@@ -396,7 +547,7 @@
       }
       document.querySelectorAll('#prompt-list li').forEach(li => {
         const text = li.getAttribute('data-prompt').toLowerCase();
-        li.style.display = text.includes(query) ? '' : 'none';
+        li.style.display = text.includes(query) ? 'flex' : 'none';
       });
     });
 
@@ -404,9 +555,41 @@
       searchBar.value = '';
       clearSearchBtn.classList.add('hidden');
       document.querySelectorAll('#prompt-list li').forEach(li => {
-        li.style.display = '';
+        li.style.display = 'flex';
       });
       searchBar.focus();
+    });
+
+    // Handle Shift+Enter for new lines in textareas
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && e.shiftKey) {
+        const activeElement = document.activeElement;
+        if (activeElement.tagName === 'TEXTAREA') {
+          // Allow default behavior
+          return;
+        }
+      }
+    });
+
+    // Handle Enter key for running the prompt in user-input field
+    userInputField.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleRun();
+      }
+    });
+
+    // Handle Run button click
+    runButton.addEventListener('click', () => {
+      handleRun();
+    });
+
+    // Copy user input when input field is clicked
+    userInputField.addEventListener('click', () => {
+      const text = userInputField.value;
+      if (text.trim() !== "") {
+        copyToClipboard(text, userInputTooltip.parentElement);
+      }
     });
 
   </script>
@@ -414,9 +597,21 @@
   <style>
     @import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
     body { font-family: 'Nunito', sans-serif; }
-    #conversation {
-      max-height: 60vh;
-      overflow-y: auto;
+    /* Ensure tooltips are above other elements */
+    .tooltip {
+      z-index: 20;
+    }
+    /* Loading Spinner */
+    .loading-spinner::after {
+      content: '⏳';
+      display: inline-block;
+      margin-left: 5px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </body>
