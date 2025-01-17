@@ -35,7 +35,6 @@
     /* Ensure HTML content breaks lines and styles correctly */
     .assistant-message div,
     .user-message div {
-      white-space: pre-wrap;
       max-width: 80%;
     }
 
@@ -86,9 +85,7 @@
       padding: 4px 8px;
       position: absolute;
       z-index: 20;
-      bottom: 125%; /* Position above the element */
       left: 50%;
-      transform: translateX(-50%);
       opacity: 0;
       transition: opacity 0.3s;
       font-size: 0.75rem;
