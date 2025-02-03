@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LLM Prompt Manager</title>
+  <title>Princess Jean</title>
   <link rel="stylesheet" href="https://cdn.tailwindcss.com"/>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -107,7 +107,6 @@
 
     .user-avatar {
       margin-left: 0.5rem;
-      margin-right: 0;
     }
 
     /* Message Bubble Styles */
@@ -148,7 +147,10 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
   <header class="px-4 py-2 flex justify-between items-center bg-white shadow">
-    <h1 class="text-2xl font-bold text-blue-600">LLM Prompt Manager</h1>
+    <div class="flex items-center">
+      <img src="https://i.pravatar.cc/40?img=5" alt="Assistant Avatar" class="avatar">
+      <h1 class="text-2xl font-bold text-blue-600">Princess Jean</h1>
+    </div>
     <button id="new-prompt-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
       New Prompt
     </button>
@@ -186,16 +188,17 @@
 
         <!-- Simplified User Input Section -->
         <section class="bg-white shadow-lg rounded-lg p-6 mb-6 flex items-center space-x-4">
-          <input 
+          <textarea 
             id="user-input"
-            type="text"
             placeholder="Enter your input here..."
             class="flex-1 p-3 border border-gray-300 rounded-lg text-lg clickable focus:outline-none focus:ring-2 focus:ring-blue-500"
             aria-label="User Input"
-          />
+            rows="3"
+          ></textarea>
           <button 
             id="run-button"
             class="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300"
+            onclick="runCommand()"
           >
             Run
           </button>
@@ -557,22 +560,18 @@
       searchBar.focus();
     });
 
-    // Handle Shift+Enter for new lines in textareas
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && e.shiftKey) {
-        const activeElement = document.activeElement;
-        if (activeElement.tagName === 'TEXTAREA') {
-          // Allow default behavior
-          return;
-        }
-      }
-    });
-
     // Handle Enter key for running the prompt in user-input field
     userInputField.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleRun();
+      if (e.key === 'Enter') {
+        if (e.shiftKey) {
+          // Allow new line
+          e.preventDefault();
+          userInputField.value += '\n'; // Add a line break
+        } else {
+          // Run the command without creating a new line
+          e.preventDefault();
+          handleRun();
+        }
       }
     });
 
