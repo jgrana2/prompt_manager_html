@@ -1,0 +1,165 @@
+@import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+
+body {
+    font-family: 'Nunito', sans-serif;
+}
+
+/* Ensure tooltips are above other elements */
+.tooltip {
+    z-index: 20;
+}
+
+/* Loading Spinner */
+.loading-spinner::after {
+    content: '⏳';
+    display: inline-block;
+    margin-left: 5px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Hide delete button by default, show on li hover */
+.delete-btn {
+    display: none;
+}
+
+li:hover .delete-btn {
+    display: inline-block;
+}
+
+/* Style for message containers */
+.message {
+    margin-bottom: 1rem;
+    position: relative;
+    /* For tooltip positioning */
+    display: flex;
+    align-items: flex-end;
+}
+
+.assistant-message {
+    justify-content: flex-start;
+}
+
+.user-message {
+    justify-content: flex-end;
+}
+
+/* Ensure HTML content breaks lines and styles correctly */
+.assistant-message div,
+.user-message div {
+    max-width: 80%;
+}
+
+/* Style for smaller run button */
+.run-button {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* Scrollbar styling for conversation */
+#conversation::-webkit-scrollbar {
+    width: 8px;
+}
+
+#conversation::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#conversation::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+#conversation::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Optional: Add some padding to the conversation area */
+#conversation {
+    padding-right: 1rem;
+    background: url('https://images.unsplash.com/photo-1517816428104-4aa4d8e97cdf?auto=format&fit=crop&w=1350&q=80') no-repeat center center;
+    background-size: cover;
+    border-radius: 8px;
+}
+
+/* Cursor pointer for clickable elements */
+.clickable {
+    cursor: pointer;
+}
+
+/* Tooltip styling */
+.tooltip {
+    visibility: hidden;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 4px 8px;
+    position: absolute;
+    z-index: 20;
+    left: 50%;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.75rem;
+}
+
+.message.show-tooltip .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Avatar Styles */
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 0.5rem;
+}
+
+.user-avatar {
+    margin-left: 0.5rem;
+}
+
+/* Message Bubble Styles */
+.message-content {
+    position: relative;
+    padding: 10px 14px;
+    border-radius: 20px;
+    max-width: 70%;
+    word-wrap: break-word;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s;
+}
+
+.assistant-content {
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #333;
+}
+
+.user-content {
+    background-color: #3b82f6;
+    color: #fff;
+}
+
+/* Hover effect for clickable messages */
+.clickable:hover .message-content {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #conversation {
+        background: url('https://images.unsplash.com/photo-1526045612212-70caf35c14df?auto=format&fit=crop&w=1350&q=80') no-repeat center center;
+        background-size: cover;
+    }
+}

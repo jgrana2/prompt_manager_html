@@ -4,11 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Princess Jean</title>
-  <link rel="stylesheet" href="https://cdn.tailwindcss.com"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Nunito:wght@400;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
+    /* Tailwind CSS CDN */
+    @import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+    
+    body { 
+      font-family: 'Nunito', sans-serif; 
+      background: linear-gradient(to right, #e0f7fa, #ffffff); /* Soft gradient background */
+    }
     
     /* Hide delete button by default, show on li hover */
     .delete-btn {
@@ -18,10 +23,10 @@
       display: inline-block;
     }
 
-    /* Style for message containers */
+    /* Message Container Styles */
     .message {
-      margin-bottom: 1rem;
-      position: relative; /* For tooltip positioning */
+      margin-bottom: 1.5rem;
+      position: relative;
       display: flex;
       align-items: flex-end;
     }
@@ -32,21 +37,21 @@
       justify-content: flex-end;
     }
 
-    /* Ensure HTML content breaks lines and styles correctly */
+    /* Message Content */
     .assistant-message div,
     .user-message div {
-      max-width: 80%;
+      max-width: 75%;
     }
 
-    /* Style for smaller run button */
+    /* Run Button */
     .run-button {
-      padding: 0.25rem 0.75rem;
-      font-size: 0.875rem;
+      padding: 0.5rem 1.5rem;
+      font-size: 1rem;
     }
-    
-    /* Scrollbar styling for conversation */
+
+    /* Scrollbar Styling */
     #conversation::-webkit-scrollbar {
-      width: 8px;
+      width: 10px;
     }
 
     #conversation::-webkit-scrollbar-track {
@@ -54,41 +59,55 @@
     }
 
     #conversation::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 4px;
+      background: #bbb;
+      border-radius: 5px;
     }
 
     #conversation::-webkit-scrollbar-thumb:hover {
-      background: #555;
+      background: #999;
     }
 
-    /* Optional: Add some padding to the conversation area */
+    /* Conversation Area */
     #conversation {
-      padding-right: 1rem;
-      background: url('https://images.unsplash.com/photo-1517816428104-4aa4d8e97cdf?auto=format&fit=crop&w=1350&q=80') no-repeat center center;
-      background-size: cover;
-      border-radius: 8px;
+      padding-right: 1.5rem;
+      background: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      max-height: 60vh;
     }
 
-    /* Cursor pointer for clickable elements */
+    /* Cursor Pointer */
     .clickable {
       cursor: pointer;
     }
 
-    /* Tooltip styling */
+    /* Tooltip Styling */
     .tooltip {
       visibility: hidden;
-      background-color: #333;
+      background-color: #555;
       color: #fff;
       text-align: center;
       border-radius: 4px;
-      padding: 4px 8px;
+      padding: 6px 10px;
       position: absolute;
       z-index: 20;
+      bottom: 125%; /* Position above the element */
       left: 50%;
+      transform: translateX(-50%);
       opacity: 0;
       transition: opacity 0.3s;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%; /* At the bottom of the tooltip */
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #555 transparent transparent transparent;
     }
 
     .message.show-tooltip .tooltip {
@@ -98,505 +117,66 @@
 
     /* Avatar Styles */
     .avatar {
-      width: 40px;
-      height: 40px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       object-fit: cover;
-      margin-right: 0.5rem;
+      margin-right: 0.75rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .user-avatar {
-      margin-left: 0.5rem;
+      margin-left: 0.75rem;
+      transform: scaleX(-1); /* Mirror the user avatar */
     }
 
     /* Message Bubble Styles */
     .message-content {
       position: relative;
-      padding: 10px 14px;
-      border-radius: 20px;
-      max-width: 70%;
+      padding: 14px 18px;
+      border-radius: 25px;
+      max-width: 75%;
       word-wrap: break-word;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: background-color 0.3s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: box-shadow 0.3s, background-color 0.3s;
     }
 
     .assistant-content {
-      background-color: rgba(255, 255, 255, 0.8);
+      background-color: #f0f4f8;
       color: #333;
     }
 
     .user-content {
-      background-color: #3b82f6;
+      background: linear-gradient(45deg, #6b73ff, #000dff);
       color: #fff;
     }
 
-    /* Hover effect for clickable messages */
+    /* Hover Effects */
     .clickable:hover .message-content {
-      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
 
-    /* Responsive adjustments */
+    /* Responsive Adjustments */
     @media (max-width: 768px) {
       #conversation {
-        background: url('https://images.unsplash.com/photo-1526045612212-70caf35c14df?auto=format&fit=crop&w=1350&q=80') no-repeat center center;
-        background-size: cover;
-      }
-    }
-
-  </style>
-</head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-  <header class="px-4 py-2 flex justify-between items-center bg-white shadow">
-    <div class="flex items-center">
-      <img src="https://i.pravatar.cc/40?img=5" alt="Assistant Avatar" class="avatar">
-      <h1 class="text-2xl font-bold text-blue-600">Princess Jean</h1>
-    </div>
-    <button id="new-prompt-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
-      New Prompt
-    </button>
-  </header>
-
-  <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
-    <!-- Sidebar -->
-    <aside class="w-full md:w-1/4 bg-white shadow p-6 overflow-y-auto">
-      <h2 class="text-xl font-bold mb-6 text-gray-800">Saved Prompts</h2>
-      <div class="relative mb-6">
-        <input 
-          id="search-bar" 
-          type="text" 
-          placeholder="Search prompts..." 
-          class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button id="clear-search" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 hidden">
-          &times;
-        </button>
-      </div>
-      <ul class="list-none divide-y divide-gray-200" id="prompt-list"></ul>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="w-full md:flex-1 p-8 overflow-y-auto flex flex-col bg-gradient-to-r from-blue-50 to-indigo-50">
-      <div id="initial-instruction" class="text-gray-500 text-center mt-20">
-        <p>Select a prompt on the left to start your conversation.</p>
-      </div>
-
-      <div id="content-container" class="hidden flex-1 flex flex-col">
-        <section class="bg-white shadow-lg rounded-lg p-6 mb-6">
-          <h2 class="text-xl font-bold mb-4 text-gray-800">Prompt Details</h2>
-          <div id="prompt-display" class="whitespace-pre-wrap text-gray-700"></div>
-        </section>
-
-        <!-- Simplified User Input Section -->
-        <section class="bg-white shadow-lg rounded-lg p-6 mb-6 flex items-center space-x-4">
-          <textarea 
-            id="user-input"
-            placeholder="Enter your input here..."
-            class="flex-1 p-3 border border-gray-300 rounded-lg text-lg clickable focus:outline-none focus:ring-2 focus:ring-blue-500"
-            aria-label="User Input"
-            rows="3"
-          ></textarea>
-          <button 
-            id="run-button"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300"
-            onclick="runCommand()"
-          >
-            Run
-          </button>
-          <!-- Tooltip for user input copy -->
-          <div class="tooltip" id="user-input-tooltip">Copied!</div>
-        </section>
-
-        <section id="conversation" class="flex-1 overflow-y-auto p-4 rounded-lg shadow-inner">
-          <!-- Conversation messages will be appended here -->
-        </section>
-      </div>
-    </main>
-  </div>
-
-  <!-- Modal for New Prompt -->
-  <div id="new-prompt-modal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden">
-    <div class="bg-white rounded-lg shadow-xl p-8 w-11/12 md:w-1/3">
-      <h3 class="text-2xl font-bold mb-6 text-gray-800">New Prompt</h3>
-      <textarea id="new-prompt-text" class="w-full p-4 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="5" placeholder="Enter new prompt here..."></textarea>
-      <div class="flex justify-end space-x-4">
-        <button id="cancel-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg">
-          Cancel
-        </button>
-        <button id="save-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">
-          Save
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <script src="config.js"></script>
-  <script>
-    // Element references
-    const promptList = document.getElementById('prompt-list');
-    const searchBar = document.getElementById('search-bar');
-    const clearSearchBtn = document.getElementById('clear-search');
-    const newPromptBtn = document.getElementById('new-prompt-btn');
-    const newPromptModal = document.getElementById('new-prompt-modal');
-    const cancelBtn = document.getElementById('cancel-btn');
-    const saveBtn = document.getElementById('save-btn');
-    const newPromptText = document.getElementById('new-prompt-text');
-    const promptDisplay = document.getElementById('prompt-display');
-    const conversation = document.getElementById('conversation');
-    const initialInstruction = document.getElementById('initial-instruction');
-    const contentContainer = document.getElementById('content-container');
-    const userInputField = document.getElementById('user-input');
-    const runButton = document.getElementById('run-button');
-    const userInputTooltip = document.getElementById('user-input-tooltip');
-
-    const OPENAI_API_KEY = window.OPENAI_API_KEY;
-    const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-
-    let messages = [];
-
-    function loadStoredPrompts() {
-      const stored = localStorage.getItem('savedPrompts');
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch (e) {
-          console.error('Error parsing stored prompts:', e);
-        }
-      }
-      return [];
-    }
-
-    function savePrompts(prompts) {
-      localStorage.setItem('savedPrompts', JSON.stringify(prompts));
-    }
-
-    let prompts = loadStoredPrompts();
-
-    function createPromptListItem(text) {
-      const li = document.createElement('li');
-      li.className = "py-3 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition duration-200 rounded-lg px-3";
-      li.setAttribute('data-prompt', text);
-
-      const span = document.createElement('span');
-      span.textContent = text.length > 50 ? text.slice(0, 50) + '...' : text;
-      span.className = "text-gray-700";
-      li.appendChild(span);
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = "delete-btn text-red-500 hover:text-red-700";
-      deleteBtn.title = "Delete Prompt";
-      deleteBtn.textContent = "🗑️";
-      li.appendChild(deleteBtn);
-
-      attachPromptClickHandler(li);
-
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const promptToDelete = li.getAttribute('data-prompt');
-        li.remove();
-        prompts = prompts.filter(p => p !== promptToDelete);
-        savePrompts(prompts);
-      });
-
-      return li;
-    }
-
-    prompts.forEach(text => {
-      const li = createPromptListItem(text);
-      promptList.appendChild(li);
-    });
-
-    function attachPromptClickHandler(item) {
-      item.addEventListener('click', function() {
-        if (initialInstruction.style.display !== 'none') {
-          initialInstruction.style.display = 'none';
-          contentContainer.classList.remove('hidden');
-        }
-
-        conversation.innerHTML = '';
-        messages = [];
-
-        const promptText = this.getAttribute('data-prompt');
-        promptDisplay.textContent = promptText;
-
-        // Initialize messages with system prompt
-        messages.push({ role: "system", content: promptText });
-
-        // Clear input fields
-        userInputField.value = '';
-
-        // Focus on the main input field
-        userInputField.focus();
-      });
-    }
-
-    async function handleRun() {
-      // Gather user input
-      let userInput = userInputField.value.trim();
-
-      if (!userInput) {
-        alert("Please enter some input before running the prompt.");
-        return;
+        background: rgba(255, 255, 255, 0.9);
       }
 
-      // Append the user input with :""" and """
-      let formattedInput = `:"""${userInput}"""`;
-      
-      // Add user input to messages
-      messages.push({ role: "user", content: formattedInput });
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
 
-      // Append user message to conversation without :""" and """
-      const userMessage = document.createElement('div');
-      userMessage.className = "message user-message clickable";
-      userMessage.innerHTML = `
-        <img src="https://i.pravatar.cc/40?img=3" alt="User Avatar" class="avatar user-avatar">
-        <div class="message-content user-content">
-          ${userInput}
-        </div>
-        <div class="tooltip">Copied!</div>
-      `;
-      conversation.appendChild(userMessage);
-      conversation.scrollTop = conversation.scrollHeight;
-
-      // Copy to clipboard when user message is clicked
-      userMessage.addEventListener('click', () => {
-        copyToClipboard(userInput, userMessage);
-      });
-
-      // Disable run button and show loading state
-      runButton.disabled = true;
-      runButton.textContent = "Running...";
-      runButton.classList.add('bg-blue-400', 'cursor-not-allowed');
-
-      try {
-        const stream = await sendPromptToOpenAI(messages);
-        const reader = stream.getReader();
-        await streamResponse(reader);
-      } catch (error) {
-        console.error(error);
-        const errorMessage = document.createElement('div');
-        errorMessage.className = "message assistant-message clickable";
-        errorMessage.innerHTML = `
-          <img src="https://i.pravatar.cc/40?img=5" alt="Assistant Avatar" class="avatar">
-          <div class="message-content assistant-content bg-red-100 text-red-800">
-            Error communicating with OpenAI API.
-          </div>
-          <div class="tooltip">Copied!</div>
-        `;
-        conversation.appendChild(errorMessage);
-        conversation.scrollTop = conversation.scrollHeight;
-
-        // Copy error message on click
-        errorMessage.addEventListener('click', () => {
-          copyToClipboard("Error communicating with OpenAI API.", errorMessage);
-        });
-      } finally {
-        // Re-enable run button
-        runButton.disabled = false;
-        runButton.textContent = "Run";
-        runButton.classList.remove('bg-blue-400', 'cursor-not-allowed');
-        runButton.classList.add('bg-blue-500', 'hover:bg-blue-700');
-
-        // Clear user input fields
-        userInputField.value = '';
+      header .flex.items-center {
+        margin-bottom: 1rem;
       }
     }
-
-    async function sendPromptToOpenAI(messages) {
-      const requestBody = {
-        model: "gpt-4o-mini",
-        messages: messages,
-        stream: true
-      };
-
-      const response = await fetch(OPENAI_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.statusText}`);
-      }
-
-      return response.body;
+    
+    /* Modal Overlay */
+    #new-prompt-modal {
+      backdrop-filter: blur(5px); /* Add blur to background */
     }
 
-    function streamResponse(reader) {
-      return new Promise((resolve, reject) => {
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let assistantContent = '';
-
-        // Create assistant message container
-        const assistantMessage = document.createElement('div');
-        assistantMessage.className = "message assistant-message clickable";
-        assistantMessage.innerHTML = `
-          <img src="https://i.pravatar.cc/40?img=5" alt="Assistant Avatar" class="avatar">
-          <div class="message-content assistant-content">
-            <span class="loading-spinner">⏳</span>
-          </div>
-          <div class="tooltip">Copied!</div>
-        `;
-        conversation.appendChild(assistantMessage);
-        conversation.scrollTop = conversation.scrollHeight;
-
-        const contentDiv = assistantMessage.querySelector('.assistant-content');
-
-        // Event listener for copying assistant message
-        assistantMessage.addEventListener('click', () => {
-          copyToClipboard(assistantContent, assistantMessage);
-        });
-
-        function read() {
-          reader.read().then(({ done, value }) => {
-            if (done) {
-              // Remove loading spinner and display content
-              contentDiv.innerHTML = assistantContent;
-              conversation.scrollTop = conversation.scrollHeight;
-              // Update messages with the full assistant response
-              messages.push({ role: "assistant", content: assistantContent });
-              resolve();
-              return;
-            }
-
-            buffer += decoder.decode(value, { stream: true });
-            let lines = buffer.split('\n');
-            buffer = lines.pop();
-
-            for (let line of lines) {
-              line = line.trim();
-              if (!line.startsWith('data: ')) continue;
-
-              let jsonStr = line.replace(/^data:\s*/, '');
-              if (jsonStr === '[DONE]') {
-                // Remove loading spinner and display content
-                contentDiv.innerHTML = assistantContent;
-                conversation.scrollTop = conversation.scrollHeight;
-                messages.push({ role: "assistant", content: assistantContent });
-                resolve();
-                return;
-              }
-
-              try {
-                let parsed = JSON.parse(jsonStr);
-                let deltaContent = parsed.choices[0]?.delta?.content;
-                if (deltaContent) {
-                  assistantContent += deltaContent;
-                  contentDiv.innerHTML = assistantContent;
-                  conversation.scrollTop = conversation.scrollHeight;
-                }
-              } catch (e) {
-                console.error('Error parsing JSON:', e);
-              }
-            }
-            read();
-          }).catch(error => {
-            console.error("Error reading stream:", error);
-            reject(error);
-          });
-        }
-        read();
-      });
-    }
-
-    function copyToClipboard(text, element) {
-      navigator.clipboard.writeText(text).then(() => {
-        // Show tooltip
-        element.classList.add('show-tooltip');
-        setTimeout(() => {
-          element.classList.remove('show-tooltip');
-        }, 1000);
-      }).catch(err => {
-        console.error('Could not copy text: ', err);
-      });
-    }
-
-    newPromptBtn.addEventListener('click', () => {
-      newPromptModal.classList.remove('hidden');
-      newPromptText.focus();
-    });
-
-    cancelBtn.addEventListener('click', () => {
-      newPromptModal.classList.add('hidden');
-      newPromptText.value = '';
-    });
-
-    saveBtn.addEventListener('click', () => {
-      const text = newPromptText.value.trim();
-      if (text) {
-        const newLi = createPromptListItem(text);
-        promptList.appendChild(newLi);
-
-        prompts.push(text);
-        savePrompts(prompts);
-
-        newPromptText.value = '';
-        newPromptModal.classList.add('hidden');
-      }
-    });
-
-    searchBar.addEventListener('input', () => {
-      const query = searchBar.value.toLowerCase();
-      if (query.length > 0) {
-        clearSearchBtn.classList.remove('hidden');
-      } else {
-        clearSearchBtn.classList.add('hidden');
-      }
-      document.querySelectorAll('#prompt-list li').forEach(li => {
-        const text = li.getAttribute('data-prompt').toLowerCase();
-        li.style.display = text.includes(query) ? 'flex' : 'none';
-      });
-    });
-
-    clearSearchBtn.addEventListener('click', () => {
-      searchBar.value = '';
-      clearSearchBtn.classList.add('hidden');
-      document.querySelectorAll('#prompt-list li').forEach(li => {
-        li.style.display = 'flex';
-      });
-      searchBar.focus();
-    });
-
-    // Handle Enter key for running the prompt in user-input field
-    userInputField.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        if (e.shiftKey) {
-          // Allow new line
-          e.preventDefault();
-          userInputField.value += '\n'; // Add a line break
-        } else {
-          // Run the command without creating a new line
-          e.preventDefault();
-          handleRun();
-        }
-      }
-    });
-
-    // Handle Run button click
-    runButton.addEventListener('click', () => {
-      handleRun();
-    });
-
-    // Copy user input when input field is clicked
-    userInputField.addEventListener('click', () => {
-      const text = userInputField.value;
-      if (text.trim() !== "") {
-        copyToClipboard(text, userInputTooltip.parentElement);
-      }
-    });
-
-  </script>
-
-  <style>
-    @import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
-    body { font-family: 'Nunito', sans-serif; }
-    /* Ensure tooltips are above other elements */
-    .tooltip {
-      z-index: 20;
-    }
     /* Loading Spinner */
     .loading-spinner::after {
       content: '⏳';
@@ -608,6 +188,100 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <header class="px-6 py-4 flex justify-between items-center bg-white shadow-md">
+    <div class="flex items-center">
+      <img src="https://i.pravatar.cc/50?img=5" alt="Assistant Avatar" class="avatar">
+      <h1 class="text-3xl font-bold text-indigo-600 ml-3">Princess Jean</h1>
+    </div>
+    <button id="new-prompt-btn" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-full shadow-md transition duration-300">
+      New Prompt
+    </button>
+  </header>
+
+  <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-1/4 bg-white shadow-lg p-7 overflow-y-auto">
+      <h2 class="text-2xl font-semibold mb-7 text-gray-800">Saved Prompts</h2>
+      <div class="relative mb-7">
+        <input 
+          id="search-bar" 
+          type="text" 
+          placeholder="Search prompts..." 
+          class="w-full p-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        />
+        <button id="clear-search" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 hidden">
+          &times;
+        </button>
+      </div>
+      <ul class="list-none divide-y divide-gray-200" id="prompt-list"></ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="w-full md:flex-1 p-10 overflow-y-auto flex flex-col bg-gradient-to-b from-blue-50 to-indigo-100">
+      <div id="initial-instruction" class="text-gray-600 text-center mt-24">
+        <p class="text-lg">Select a prompt on the left to start your conversation.</p>
+      </div>
+
+      <div id="content-container" class="hidden flex-1 flex flex-col">
+        <section class="bg-white shadow-md rounded-lg p-6 mb-8">
+          <h2 class="text-2xl font-semibold mb-5 text-gray-800">Prompt Details</h2>
+          <div id="prompt-display" class="whitespace-pre-wrap text-gray-700 text-lg"></div>
+        </section>
+
+        <!-- User Input Section -->
+        <section class="bg-white shadow-md rounded-lg p-6 mb-8 flex items-center space-x-5">
+          <textarea 
+            id="user-input"
+            placeholder="Enter your input here..."
+            class="flex-1 p-4 border border-gray-300 rounded-lg text-xl clickable focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"
+            aria-label="User Input"
+            rows="3"
+          ></textarea>
+          <button 
+            id="run-button"
+            class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-3 px-8 rounded-full shadow-md transition duration-300"
+            onclick="handleRun()"
+          >
+            Run
+          </button>
+          <!-- Tooltip for user input copy -->
+          <div class="tooltip" id="user-input-tooltip">Copied!</div>
+        </section>
+
+        <section id="conversation" class="flex-1 overflow-y-auto p-5 rounded-lg shadow-inner bg-white">
+          <!-- Conversation messages will be appended here -->
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal for New Prompt -->
+  <div id="new-prompt-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl shadow-xl p-10 w-11/12 md:w-1/3">
+      <h3 class="text-2xl font-semibold mb-6 text-gray-800">New Prompt</h3>
+      <textarea id="new-prompt-text" class="w-full p-4 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" rows="5" placeholder="Enter new prompt here..."></textarea>
+      <div class="flex justify-end space-x-4">
+        <button id="cancel-btn" class="bg-gray-400 hover:bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition">
+          Cancel
+        </button>
+        <button id="save-btn" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="index.js"></script>
+  <style>
+    /* Ensure tooltips are above other elements */
+    .tooltip {
+      z-index: 30;
     }
   </style>
 </body>
