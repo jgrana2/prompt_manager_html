@@ -1,12 +1,53 @@
+/* Tailwind CSS CDN */
 @import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
 
-body {
-    font-family: 'Nunito', sans-serif;
+/* Base Styles */
+body { 
+    font-family: 'Nunito', sans-serif; 
+    background: linear-gradient(to right, #e0f7fa, #ffffff); /* Soft gradient background */
 }
 
 /* Ensure tooltips are above other elements */
 .tooltip {
-    z-index: 20;
+    z-index: 30;
+    visibility: hidden;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 6px 10px;
+    position: absolute;
+    bottom: 125%; /* Position above the element */
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.8rem;
+}
+
+.tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%; /* At the bottom of the tooltip */
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+
+.message.show-tooltip .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Delete Button */
+.delete-btn {
+    display: none;
+}
+
+li:hover .delete-btn {
+    display: inline-block;
 }
 
 /* Loading Spinner */
@@ -18,29 +59,14 @@ body {
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-/* Hide delete button by default, show on li hover */
-.delete-btn {
-    display: none;
-}
-
-li:hover .delete-btn {
-    display: inline-block;
-}
-
-/* Style for message containers */
+/* Message Container Styles */
 .message {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     position: relative;
-    /* For tooltip positioning */
     display: flex;
     align-items: flex-end;
 }
@@ -53,21 +79,65 @@ li:hover .delete-btn {
     justify-content: flex-end;
 }
 
-/* Ensure HTML content breaks lines and styles correctly */
+/* Message Content */
 .assistant-message div,
 .user-message div {
-    max-width: 80%;
+    max-width: 75%;
 }
 
-/* Style for smaller run button */
-.run-button {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.875rem;
+/* Message Bubble Styles */
+.message-content {
+    position: relative;
+    padding: 14px 18px;
+    border-radius: 25px;
+    max-width: 75%;
+    word-wrap: break-word;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s, background-color 0.3s;
 }
 
-/* Scrollbar styling for conversation */
+.assistant-content {
+    background-color: #f0f4f8;
+    color: #333;
+}
+
+.user-content {
+    background: linear-gradient(45deg, #6b73ff, #000dff);
+    color: #fff;
+}
+
+/* Hover Effects */
+.clickable:hover .message-content {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Avatar Styles */
+.avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-avatar {
+    margin-left: 0.75rem;
+    transform: scaleX(-1); /* Mirror the user avatar */
+}
+
+/* Scrollbar Styling for Conversation */
+#conversation {
+    padding-right: 1.5rem;
+    background: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    max-height: 60vh;
+    overflow-y: auto; /* Ensure scrollbar appears when needed */
+}
+
 #conversation::-webkit-scrollbar {
-    width: 8px;
+    width: 10px;
 }
 
 #conversation::-webkit-scrollbar-track {
@@ -75,91 +145,62 @@ li:hover .delete-btn {
 }
 
 #conversation::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
+    background: #bbb;
+    border-radius: 5px;
 }
 
 #conversation::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: #999;
 }
 
-/* Optional: Add some padding to the conversation area */
-#conversation {
-    padding-right: 1rem;
+/* Run Button */
+.run-button {
+    padding: 0.5rem 1.5rem;
+    font-size: 1rem;
+}
+
+/* Cursor Pointer for Clickable Elements */
+.clickable {
+    cursor: pointer;
+}
+
+/* Message Containers Line Breaks and Styles */
+.assistant-message div,
+.user-message div {
+    /* Already defined max-width above */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    #conversation {
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    header .flex.items-center {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Optional: Background Image for Conversation Area */
+#conversation-background {
     background: url('https://images.unsplash.com/photo-1517816428104-4aa4d8e97cdf?auto=format&fit=crop&w=1350&q=80') no-repeat center center;
     background-size: cover;
     border-radius: 8px;
 }
 
-/* Cursor pointer for clickable elements */
-.clickable {
-    cursor: pointer;
-}
-
-/* Tooltip styling */
-.tooltip {
-    visibility: hidden;
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    border-radius: 4px;
-    padding: 4px 8px;
-    position: absolute;
-    z-index: 20;
-    left: 50%;
-    opacity: 0;
-    transition: opacity 0.3s;
-    font-size: 0.75rem;
-}
-
-.message.show-tooltip .tooltip {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* Avatar Styles */
-.avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 0.5rem;
-}
-
-.user-avatar {
-    margin-left: 0.5rem;
-}
-
-/* Message Bubble Styles */
-.message-content {
-    position: relative;
-    padding: 10px 14px;
-    border-radius: 20px;
-    max-width: 70%;
-    word-wrap: break-word;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s;
-}
-
-.assistant-content {
-    background-color: rgba(255, 255, 255, 0.8);
-    color: #333;
-}
-
-.user-content {
-    background-color: #3b82f6;
-    color: #fff;
-}
-
-/* Hover effect for clickable messages */
-.clickable:hover .message-content {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
-    #conversation {
+    #conversation-background {
         background: url('https://images.unsplash.com/photo-1526045612212-70caf35c14df?auto=format&fit=crop&w=1350&q=80') no-repeat center center;
         background-size: cover;
     }
+}
+
+/* Modal Overlay */
+#new-prompt-modal {
+    backdrop-filter: blur(5px); /* Add blur to background */
 }
