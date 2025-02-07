@@ -74,6 +74,12 @@ prompts.forEach(text => {
 
 function attachPromptClickHandler(item) {
     item.addEventListener('click', function () {
+        const conversation = document.getElementById('conversation');
+        if (conversation.classList.contains('hidden')) {
+            // Stay hidden
+        }else{
+            conversation.classList.add('hidden');
+        }
         if (initialInstruction.style.display !== 'none') {
             initialInstruction.style.display = 'none';
             contentContainer.classList.remove('hidden');
@@ -99,6 +105,10 @@ function attachPromptClickHandler(item) {
 async function handleRun() {
     // Gather user input
     let userInput = userInputField.value.trim();
+    const conversation = document.getElementById('conversation');
+    if (conversation.classList.contains('hidden')) {
+        conversation.classList.remove('hidden');
+    }
 
     if (!userInput) {
         alert("Please enter some input before running the prompt.");
@@ -350,11 +360,6 @@ userInputField.addEventListener('keydown', (e) => {
             handleRun();
         }
     }
-});
-
-// Handle Run button click
-runButton.addEventListener('click', () => {
-    handleRun();
 });
 
 // Copy user input when input field is clicked
