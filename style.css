@@ -164,12 +164,6 @@ li:hover .delete-btn {
     cursor: pointer;
 }
 
-/* Message Containers Line Breaks and Styles */
-.assistant-message div,
-.user-message div {
-    /* Already defined max-width above */
-}
-
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     #conversation {

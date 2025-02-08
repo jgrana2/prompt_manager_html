@@ -8,6 +8,7 @@ const elements = {
   newPromptBtn: document.getElementById('new-prompt-btn'),
   newPromptModal: document.getElementById('new-prompt-modal'),
   cancelBtn: document.getElementById('cancel-btn'),
+  closeModalBtn: document.getElementById('modal-close'),
   saveBtn: document.getElementById('save-btn'),
   newPromptText: document.getElementById('new-prompt-text'),
   promptDisplay: document.getElementById('prompt-display'),
@@ -21,7 +22,7 @@ const elements = {
 
 const { 
   promptList, searchBar, clearSearchBtn, newPromptBtn, newPromptModal, 
-  cancelBtn, saveBtn, newPromptText, promptDisplay, conversation, 
+  cancelBtn, closeModalBtn, saveBtn, newPromptText, promptDisplay, conversation, 
   initialInstruction, contentContainer, userInputField, runButton, 
   userInputTooltip 
 } = elements;
@@ -333,6 +334,7 @@ document.addEventListener('DOMContentLoaded', renderPrompts);
 // Event Listeners
 newPromptBtn.addEventListener('click', openNewPromptModal);
 cancelBtn.addEventListener('click', closeNewPromptModal);
+closeModalBtn.addEventListener('click', closeNewPromptModal);
 saveBtn.addEventListener('click', saveNewPrompt);
 
 promptList.addEventListener('click', (e) => {

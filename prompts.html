@@ -3,94 +3,170 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Princess Jean</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Nunito:wght@400;600&display=swap" rel="stylesheet"/>
+  <title>Princess Jean - AI Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link href="style.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <!-- Include Heroicons for enhanced iconography -->
+  <link href="https://unpkg.com/heroicons@2.0.13/dist/heroicons.min.css" rel="stylesheet">
 </head>
-<body class="min-h-screen flex flex-col">
-  <header class="px-6 py-4 flex justify-between items-center bg-white shadow-md">
-    <div class="flex items-center">
-      <img src="https://i.pravatar.cc/50?img=5" alt="Assistant Avatar" class="avatar">
-      <h1 class="text-3xl font-bold text-indigo-600 ml-3">Princess Jean</h1>
+<body class="min-h-screen flex flex-col bg-gradient-to-r from-indigo-100 to-pink-100 font-sans">
+  <!-- Glass-morphism Header -->
+  <header class="px-8 py-5 flex justify-between items-center bg-white shadow-lg border-b border-slate-200 sticky top-0 z-50 transition-all duration-300">
+    <!-- Removed transparency by setting background to fully opaque white -->
+    <div class="flex items-center space-x-5">
+      <div class="relative group">
+        <div class="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full opacity-80 group-hover:opacity-100 blur transition duration-300"></div>
+        <img src="https://i.pravatar.cc/50?img=5" alt="Assistant Avatar" class="relative w-14 h-14 rounded-full object-cover border-2 border-white shadow-md">
+        <div class="absolute -bottom-2 -right-2 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white"></div>
+      </div>
+      <div class="flex flex-col">
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 text-transparent bg-clip-text">Princess Jean</h1>
+        <span class="text-sm text-slate-500">AI Assistant</span>
+      </div>
     </div>
-    <button id="new-prompt-btn" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-full shadow-md transition duration-300">
-      New Prompt
-    </button>
+    <div class="flex items-center space-x-5">
+      <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="text-slate-600 hover:text-slate-800 transition-colors">
+        <!-- Dark Mode Icon -->
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-8.66h-1M4.34 12h-1m14.14 5.66l-.7-.7M6.34 6.34l-.7-.7m12.02 0l-.7.7M6.34 17.66l-.7.7M12 5a7 7 0 000 14 7 7 0 000-14z"/>
+        </svg>
+      </button>
+      <button id="new-prompt-btn" class="group relative px-7 py-3 font-semibold text-white rounded-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-lg">
+        <span class="flex items-center space-x-3">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span class="text-lg">New Prompt</span>
+        </span>
+      </button>
+    </div>
   </header>
 
-  <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
-    <!-- Sidebar -->
-    <aside class="w-full md:w-1/4 bg-white shadow-lg p-7 overflow-y-auto">
-      <h2 class="text-2xl font-semibold mb-7 text-gray-800">Saved Prompts</h2>
-      <div class="relative mb-7">
-        <input 
-          id="search-bar" 
-          type="text" 
-          placeholder="Search prompts..." 
-          class="w-full p-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-        />
-        <button id="clear-search" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 hidden">
-          &times;
-        </button>
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Enhanced Sidebar -->
+    <aside class="w-full md:w-80 lg:w-96 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 overflow-y-auto transition-all duration-300">
+      <div class="p-8 space-y-7">
+        <h2 class="text-2xl font-semibold text-slate-800 dark:text-slate-200">Saved Prompts</h2>
+        <div class="relative">
+          <input 
+            id="search-bar" 
+            type="text" 
+            placeholder="Search prompts..." 
+            class="w-full pl-14 pr-5 py-4 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-slate-700 dark:text-slate-300 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300"
+            aria-label="Search Prompts"
+          />
+          <svg class="w-6 h-6 absolute left-5 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <button id="clear-search" class="absolute right-5 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors hidden" aria-label="Clear Search">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Prompt List with Enhanced Styling -->
+        <ul class="list-none space-y-4" id="prompt-list" aria-label="List of Saved Prompts">
+          <!-- Prompt items will be dynamically added here -->
+        </ul>
       </div>
-      <ul class="list-none divide-y divide-gray-200" id="prompt-list"></ul>
     </aside>
 
-    <!-- Main Content -->
-    <main class="w-full md:flex-1 p-10 overflow-y-auto flex flex-col bg-gradient-to-b from-blue-50 to-indigo-100">
-      <div id="initial-instruction" class="text-gray-600 text-center mt-24">
-        <p class="text-lg">Select a prompt on the left to start your conversation.</p>
+    <!-- Main Content Area -->
+    <main class="w-full flex-1 p-8 md:p-10 overflow-y-auto bg-gradient-to-br from-slate-100 via-purple-50 to-pink-100 dark:from-slate-900 dark:via-purple-900 dark:to-pink-900 transition-colors">
+      <!-- Empty State -->
+      <!-- Changed alignment from center to top by removing flex and centering classes -->
+      <div id="initial-instruction" class="mt-8 text-left">
+        <div class="w-28 h-28 mb-8 text-purple-400 animate-pulse">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+          </svg>
+        </div>
+        <p class="text-2xl font-medium text-slate-600 dark:text-slate-300">Select a prompt to start your conversation</p>
+        <p class="mt-3 text-slate-400 dark:text-slate-500">Your prompts will appear here</p>
       </div>
 
-      <div id="content-container" class="hidden flex-1 flex flex-col">
-        <section class="bg-white shadow-md rounded-lg p-6 mb-8">
-          <h2 class="text-2xl font-semibold mb-5 text-gray-800">Prompt Details</h2>
-          <div id="prompt-display" class="whitespace-pre-wrap text-gray-700 text-lg"></div>
+      <!-- Content Container -->
+      <div id="content-container" class="hidden flex-1 flex-col space-y-8">
+        <!-- Prompt Details Section -->
+        <section class="bg-white dark:bg-slate-800/90 backdrop-blur-sm shadow-lg rounded-3xl p-8 transition-shadow duration-300 hover:shadow-2xl border border-slate-200 dark:border-slate-700">
+          <h2 class="text-2xl font-semibold text-slate-800 dark:text-slate-200 mb-6">Prompt Details</h2>
+          <div id="prompt-display" class="prose max-w-none text-slate-700 dark:text-slate-300"></div>
         </section>
 
         <!-- User Input Section -->
-        <section class="bg-white shadow-md rounded-lg p-6 mb-8 flex items-center space-x-5">
-          <textarea 
-            id="user-input"
-            placeholder="Enter your input here..."
-            class="flex-1 p-4 border border-gray-300 rounded-lg text-xl clickable focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"
-            aria-label="User Input"
-            rows="3"
-          ></textarea>
-          <button 
-            id="run-button"
-            class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-3 px-8 rounded-full shadow-md transition duration-300"
-            onclick="handleRun()"
-          >
-            Run
-          </button>
-          <!-- Tooltip for user input copy -->
-          <div class="tooltip" id="user-input-tooltip">Copied!</div>
+        <section class="bg-white dark:bg-slate-800/90 backdrop-blur-sm shadow-lg rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-700">
+          <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-6">
+            <textarea 
+              id="user-input"
+              placeholder="Type your message here..."
+              class="flex-1 p-5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-2xl text-slate-700 dark:text-slate-300 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 resize-none shadow-inner"
+              rows="4"
+              aria-label="User Input"
+            ></textarea>
+            <button 
+              id="run-button"
+              class="group relative px-8 py-4 font-semibold text-white rounded-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-lg"
+              onclick="handleRun()"
+              aria-label="Run Prompt"
+            >
+              <span class="flex items-center space-x-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+                <span class="text-lg">Run</span>
+              </span>
+            </button>
+          </div>
         </section>
 
-        <section id="conversation" class="flex-1 overflow-y-auto p-5 rounded-lg shadow-inner bg-white hidden">
-          <!-- Conversation messages will be appended here -->
+        <!-- Conversation Section -->
+        <section id="conversation" class="flex-1 bg-white dark:bg-slate-800/90 backdrop-blur-sm shadow-lg rounded-3xl p-8 border border-slate-200 dark:border-slate-700 space-y-5 overflow-y-auto">
+          <!-- Messages will be dynamically added here -->
         </section>
       </div>
     </main>
   </div>
 
-  <!-- Modal for New Prompt -->
-  <div id="new-prompt-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-    <div class="bg-white rounded-2xl shadow-xl p-10 w-11/12 md:w-1/3">
-      <h3 class="text-2xl font-semibold mb-6 text-gray-800">New Prompt</h3>
-      <textarea id="new-prompt-text" class="w-full p-4 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" rows="5" placeholder="Enter new prompt here..."></textarea>
-      <div class="flex justify-end space-x-4">
-        <button id="cancel-btn" class="bg-gray-400 hover:bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition">
+  <!-- Enhanced Modal -->
+<div id="new-prompt-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm items-center justify-center hidden z-50">
+  <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 md:p-10 w-11/12 sm:w-3/4 md:w-2/5 max-w-4xl transform transition-opacity duration-300 scale-95">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-2xl font-semibold text-slate-800 dark:text-slate-200">Create New Prompt</h3>
+      <button id="modal-close" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors" aria-label="Close Modal">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <form id="new-prompt-form" class="space-y-8">
+      <!-- Form Content -->
+      <textarea 
+        id="new-prompt-text" 
+        class="w-full p-6 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-3xl text-slate-700 dark:text-slate-300 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 resize-none shadow-inner"
+        rows="8" 
+        placeholder="Enter your prompt here..."
+        aria-label="New Prompt Text"
+        required
+      ></textarea>
+      <div class="flex justify-end space-x-5">
+        <button type="button" id="cancel-btn" class="px-7 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-full transition-colors shadow-md">
           Cancel
         </button>
-        <button id="save-btn" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition">
-          Save
+        <button type="submit" id="save-btn" class="group relative px-8 py-3 font-semibold text-white rounded-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-lg">
+          <span class="flex items-center space-x-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span class="text-lg">Save Prompt</span>
+          </span>
         </button>
       </div>
-    </div>
+    </form>
   </div>
+</div>
 
   <script src="config.js"></script>
   <script src="index.js"></script>
