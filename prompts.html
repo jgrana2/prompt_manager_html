@@ -28,6 +28,12 @@
       </div>
     </div>
     <div class="flex items-center space-x-5">
+      <button id="export-prompts-btn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+        Export Prompts
+      </button>
+      <button id="import-prompts-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+        Import Prompts
+      </button>
       <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="text-slate-600 hover:text-slate-800 transition-colors focus:outline-none">
         <!-- Sun Icon (Light Mode) -->
         <svg id="theme-sun-icon" class="w-7 h-7 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -38,6 +44,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/>
         </svg>
       </button>
+      <input type="file" id="import-file" accept=".json" class="hidden">
       <button id="new-prompt-btn" class="group relative px-7 py-3 font-semibold text-white rounded-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-lg">
         <span class="flex items-center space-x-3">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

@@ -20,6 +20,9 @@ const elements = {
   userInputTooltip: document.getElementById('user-input-tooltip'),
   chainSection: document.getElementById('chained-prompts').closest('section'),
   chainedPromptList: document.getElementById('chained-prompt-list'),
+  exportPromptsBtn: document.getElementById('export-prompts-btn'),
+  importPromptsBtn: document.getElementById('import-prompts-btn'),
+  importFile: document.getElementById('import-file'),
 };
 
 const {
@@ -27,13 +30,75 @@ const {
   cancelBtn, closeModalBtn, saveBtn, newPromptText, promptDisplay, conversation,
   initialInstruction, contentContainer, userInputField, runButton,
   userInputTooltip, chainSection,
-  chainedPromptList
+  chainedPromptList, exportPromptsBtn,
+  importPromptsBtn,
+  importFile
 } = elements;
 
 const OPENAI_API_KEY = window.OPENAI_API_KEY;
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 let messages = [];
+
+// Add export functionality
+const exportPrompts = () => {
+  const promptsData = {
+    prompts: prompts,
+    exportDate: new Date().toISOString()
+  };
+
+  const blob = new Blob([JSON.stringify(promptsData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `prompts-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+// Add import functionality
+const importPrompts = async (file) => {
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    
+    if (!data.prompts || !Array.isArray(data.prompts)) {
+      throw new Error('Invalid prompts file format');
+    }
+
+    // Merge imported prompts with existing ones, removing duplicates
+    const newPrompts = [...new Set([...prompts, ...data.prompts])];
+    prompts = newPrompts;
+    
+    // Save to localStorage and update UI
+    savePrompts(prompts);
+    renderPrompts();
+    
+    alert('Prompts imported successfully!');
+  } catch (error) {
+    console.error('Error importing prompts:', error);
+    alert('Error importing prompts. Please check the file format.');
+  }
+};
+
+// Add event listeners
+exportPromptsBtn.addEventListener('click', exportPrompts);
+
+importPromptsBtn.addEventListener('click', () => {
+  importFile.click();
+});
+
+importFile.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    importPrompts(file);
+  }
+  // Reset the input so the same file can be imported again if needed
+  e.target.value = '';
+});
 
 // Storage Functions
 const loadStoredPrompts = () => {
@@ -156,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to Update Chain UI Elements
 const updateChainUI = () => {
   const hasChainedPrompts = chainedPromptList.children.length > 0;
-  
+
   Array.from(chainedPromptList.children).forEach((item, index) => {
       let numberBadge = item.querySelector('.chain-number');
       if (!numberBadge) {
@@ -177,7 +242,7 @@ function addMessage(sender, text) {
 
   const message = document.createElement('div');
   message.className = `message ${sender}-message clickable`;
-  
+
   // Create the message HTML structure
   message.innerHTML = `
       <img src="https://i.pravatar.cc/40?img=${sender === 'ai' ? '5' : '3'}" alt="${sender === 'ai' ? 'Assistant' : 'User'} Avatar" class="avatar ${sender === 'user' ? 'user-avatar' : ''}">
@@ -203,7 +268,7 @@ async function getAIResponse(prompt) {
       // Use the existing OpenAI API call function to get a stream
       const stream = await sendPromptToOpenAI(messages);
       const reader = stream.getReader();
-      
+
       // Use the existing streamResponse function to handle the streaming
       const response = await streamResponse(reader);
       return response;
@@ -231,22 +296,22 @@ async function handleRunChain(initialInput) {
       for (let i = 0; i < prompts.length; i++) {
           const prompt = prompts[i];
           console.log(`Processing chain prompt ${i + 1}:`, prompt);
-          
+
           try {
               // Display the current prompt
               addMessage('user', `Chain Step ${i + 1}: ${prompt}`);
-              
+
               // Create messages for this step
               const messages = [{ role: "user", content: `${prompt}\n\nInput: ${input}` }];
-              
+
               // Get streaming response
               const stream = await sendPromptToOpenAI(messages);
               const reader = stream.getReader();
-              
+
               // Use streamResponse to handle the streaming display
               const response = await streamResponse(reader);
               console.log(`Received chain response for prompt ${i + 1}:`, response);
-              
+
               // Use this response as input for the next prompt
               input = response;
           } catch (innerError) {
@@ -257,7 +322,7 @@ async function handleRunChain(initialInput) {
       }
 
       console.log('Chain execution completed successfully');
-      
+
   } catch (error) {
       console.error('Detailed error in handleRunChain:', {
           error: error,
