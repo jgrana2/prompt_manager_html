@@ -40,6 +40,98 @@ const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 let messages = [];
 
+// Settings Modal Functions
+const initializeSettings = () => {
+  const apiKey = localStorage.getItem('openai_api_key');
+  if (!apiKey) {
+    openSettingsModal();
+  }
+};
+
+const openSettingsModal = () => {
+  const modal = createElement('div', 'fixed inset-0 bg-slate-900/70 backdrop-blur-sm items-center justify-center flex z-50');
+  modal.innerHTML = `
+    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 md:p-10 w-11/12 sm:w-3/4 md:w-2/5 max-w-4xl">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-semibold text-slate-800 dark:text-slate-200">Settings</h3>
+        <button class="settings-close text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <form id="settings-form" class="space-y-6">
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">OpenAI API Key</label>
+          <input 
+            type="password" 
+            id="api-key-input"
+            class="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl"
+            placeholder="sk-..." 
+            value="${localStorage.getItem('openai_api_key') || ''}"
+          />
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            Your API key is stored locally and never sent to any server besides OpenAI.
+            <a href="https://platform.openai.com/account/api-keys" target="_blank" class="text-blue-500 hover:text-blue-700">
+              Get your API key here
+            </a>
+          </p>
+        </div>
+
+        <div class="flex justify-end space-x-4">
+          <button type="button" class="settings-close px-6 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+            Cancel
+          </button>
+          <button type="submit" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+            Save Settings
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Event Listeners
+  const closeModal = () => modal.remove();
+  modal.querySelector('.settings-close').addEventListener('click', closeModal);
+  
+  modal.querySelector('#settings-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const apiKey = modal.querySelector('#api-key-input').value.trim();
+    
+    if (!apiKey) {
+      alert('Please enter an API key');
+      return;
+    }
+
+    if (!apiKey.startsWith('sk-')) {
+      alert('Invalid API key format. It should start with "sk-"');
+      return;
+    }
+
+    localStorage.setItem('openai_api_key', apiKey);
+    closeModal();
+  });
+};
+
+// Add Settings Button to Header
+const addSettingsButton = () => {
+  const settingsBtn = createElement('button', 'px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors focus:outline-none');
+  settingsBtn.innerHTML = `
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+    </svg>
+  `;
+  settingsBtn.addEventListener('click', openSettingsModal);
+  
+  // Insert before the dark mode toggle
+  const darkModeBtn = document.getElementById('dark-mode-toggle');
+  darkModeBtn.parentNode.insertBefore(settingsBtn, darkModeBtn);
+};
+
 // Add export functionality
 const exportPrompts = () => {
   const promptsData = {
@@ -215,7 +307,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-      updateChainUI();
+  updateChainUI();
+  initializeSettings();
+  addSettingsButton();
 });
 
 // Function to Update Chain UI Elements
@@ -488,19 +582,24 @@ const handleRun = async () => {
 };
 
 const sendPromptToOpenAI = async (messages) => {
+  const apiKey = localStorage.getItem('openai_api_key');
+  if (!apiKey) {
+    throw new Error('No API key found. Please configure your OpenAI API key in settings.');
+  }
+
   const requestBody = {
-    model: "gpt-4o-mini",
+    model: "gpt-4",
     messages,
     stream: true,
     max_tokens: 4096,
-};
+  };
 
   try {
-    const response = await fetch(OPENAI_API_URL, {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify(requestBody),
     });

@@ -7,11 +7,14 @@ A sophisticated web application for managing, chaining, and executing prompts us
 ## Key Features
 
 ### Core Functionality
-- Create and save custom prompts
-- Search through saved prompts
+- Create and save prompts locally
+- Search saved prompts
 - Chain multiple prompts together
 - Generate text completions using OpenAI's API
 - Copy generated responses to clipboard
+- Import/export functionality for backup and sharing
+- Dark/light mode
+- Fully client-side - no server required
 
 ### User Interface
 - Modern, responsive design with glass-morphism style
@@ -27,7 +30,6 @@ A sophisticated web application for managing, chaining, and executing prompts us
 - Search/filter through saved prompts
 - Export prompts to JSON file
 - Import prompts from JSON file
-- Drag-and-drop interface for prompt chaining
 
 ### Prompt Chaining
 - Chain multiple prompts together sequentially
@@ -53,17 +55,20 @@ A sophisticated web application for managing, chaining, and executing prompts us
 ## Getting Started
 
 ### Prerequisites
-- Web browser with JavaScript enabled
-- OpenAI API key
+1. A modern web browser
+2. OpenAI API key ([Get one here](https://platform.openai.com/account/api-keys))
 
 ### Installation
 1. Download or clone the repository
-2. Create a `config.js` file in the root directory
-3. Add your API key to `config.js`:
-   ```javascript
-   window.OPENAI_API_KEY = 'your-api-key-here';
-   ```
-4. Open `index.html` in a web browser
+2. Open `prompts.html` in your web browser
+3. Click the settings icon and enter your OpenAI API key
+4. Start using the application!
+
+### Important Notes
+- All data (prompts, settings) is stored in your browser's localStorage
+- Your API key is stored locally and is only sent to OpenAI's servers
+- Regular backups using the export feature are recommended
+- localStorage has a size limit (usually 5-10 MB)
 
 ### Basic Usage
 1. Click "New Prompt" to create a prompt
@@ -92,17 +97,16 @@ A sophisticated web application for managing, chaining, and executing prompts us
 
 ## Features in Detail
 
-### Storage and Data
-- Local storage for prompts
-- Import/export functionality for prompts
-- Session persistence for theme preferences
-- Message history management
+## Data Storage
+- All data is stored in your browser's localStorage
+- No data is sent to any server (except OpenAI for generating responses)
+- Use the export feature regularly to backup your prompts
+- Use import to restore prompts or move them to another browser/device
 
 ### User Experience
 - Intuitive drag-and-drop interface
 - Visual feedback for actions
 - Smooth animations and transitions
-- Responsive design
 - Accessibility features
 - Loading states and error handling
 
@@ -113,8 +117,11 @@ A sophisticated web application for managing, chaining, and executing prompts us
 - Loading indicators during API calls
 - Error feedback for failed operations
 
-## Security Note
-Never commit your API key to version control. Always use a separate configuration file or environment variables to manage sensitive credentials.
+## Security Notes
+- Your API key is stored in localStorage
+- Never share your API key
+- Regular clearing of browser data will remove stored prompts and settings
+- Use export feature to backup before clearing browser data
 
 ## Browser Support
 The application is compatible with modern web browsers including:
@@ -123,10 +130,13 @@ The application is compatible with modern web browsers including:
 - Safari (latest)
 - Edge (latest)
 
+## Limitations
+- Storage is limited by browser's localStorage capacity
+- Performance may vary with large numbers of prompts
+- API usage is limited by your OpenAI account's quota and rate limits
+
 ## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 This project is open source and available under the MIT License.
-
-Enjoy using LLM Prompt Manager for all your AI prompt management needs! 🚀
