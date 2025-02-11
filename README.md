@@ -1,8 +1,14 @@
 # LLM Prompt Manager
-![image](https://github.com/user-attachments/assets/9707da49-61e5-464c-84b6-993f8fad0b58)
-Code Name: Princess Jean
+![LLM Prompt Manager](https://github.com/user-attachments/assets/9707da49-61e5-464c-84b6-993f8fad0b58)
+**Code Name:** Princess Jean
 
 A sophisticated web application for managing, chaining, and executing prompts using LLMs' APIs. This application provides a modern, user-friendly interface for creating, organizing, and generating text completions with advanced features like prompt chaining and real-time response streaming.
+
+## Live Demo
+
+Experience the **LLM Prompt Manager** live:
+
+[https://prompt-manager-html-8fwq3o5k7-jose-granados-projects.vercel.app/](https://prompt-manager-html-8fwq3o5k7-jose-granados-projects.vercel.app/)
 
 ## Key Features
 
