@@ -343,24 +343,27 @@ const initializeTheme = () => {
   const toggleButton = document.getElementById('dark-mode-toggle');
   const sunIcon = document.getElementById('theme-sun-icon');
   const moonIcon = document.getElementById('theme-moon-icon');
+  const root = document.documentElement;
 
   const updateIcons = (isDark) => {
     if (isDark) {
-      sunIcon.classList.remove('hidden');
-      moonIcon.classList.add('hidden');
-    } else {
-      sunIcon.classList.add('hidden');
       moonIcon.classList.remove('hidden');
+      sunIcon.classList.add('hidden');
+    } else {
+      moonIcon.classList.add('hidden');
+      sunIcon.classList.remove('hidden');
     }
   };
 
   const setTheme = (theme) => {
     if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
+      root.setAttribute('data-theme', 'dark');
       updateIcons(true);
+      localStorage.setItem('theme', 'dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.setAttribute('data-theme', 'light');
       updateIcons(false);
+      localStorage.setItem('theme', 'light');
     }
   };
 
@@ -375,10 +378,9 @@ const initializeTheme = () => {
   };
 
   toggleButton.addEventListener('click', () => {
-    const isDark = document.documentElement.classList.toggle('dark');
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    updateIcons(isDark);
-});
+    const isDark = root.getAttribute('data-theme') === 'dark';
+    setTheme(isDark ? 'light' : 'dark');
+  });
 
   initialize();
 };
@@ -700,17 +702,58 @@ const addRemoveButton = (item) => {
     item.setAttribute('data-prompt', promptTitle.textContent);
   }
 
-  const removeBtn = createElement('button', 'remove-chain-item ml-2 text-red-500 hover:text-red-700 transition-colors');
-  removeBtn.innerHTML = `
+  // Remove any existing wrapper div
+  const existingWrapper = item.querySelector('.flex');
+  if (existingWrapper) {
+    while (existingWrapper.firstChild) {
+      item.appendChild(existingWrapper.firstChild);
+    }
+    existingWrapper.remove();
+  }
+
+  // Create new wrapper div
+  const contentDiv = createElement('div', "flex justify-between items-center w-full");
+
+  // Move existing content into wrapper
+  while (item.firstChild) {
+    contentDiv.appendChild(item.firstChild);
+  }
+
+  // Add delete button
+  const deleteBtn = createElement('button', "delete-btn text-red-500 hover:text-red-700", { title: "Remove from Chain" });
+  deleteBtn.innerHTML = `
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
     </svg>
   `;
-  removeBtn.onclick = () => {
+
+  // Add number badge container
+  const badgeAndTitleDiv = createElement('div', "flex items-center gap-2");
+  
+  // Add the chain number badge (if it exists)
+  const existingBadge = item.querySelector('.chain-number');
+  if (existingBadge) {
+    badgeAndTitleDiv.appendChild(existingBadge);
+  }
+  
+  // Move the prompt title to the badge and title container
+  const titleElement = contentDiv.querySelector('.prompt-title');
+  if (titleElement) {
+    badgeAndTitleDiv.appendChild(titleElement);
+  }
+
+  // Clear the content div and add our new structure
+  contentDiv.innerHTML = '';
+  contentDiv.appendChild(badgeAndTitleDiv);
+  contentDiv.appendChild(deleteBtn);
+  
+  // Add the content div to the item
+  item.appendChild(contentDiv);
+
+  // Add click handler for delete button
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Prevent event bubbling
     item.remove();
     updateChainUI();
-  };
-
-  const container = item.querySelector('.flex') || item;
-  container.appendChild(removeBtn);
+  });
 };

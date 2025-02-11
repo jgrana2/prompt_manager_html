@@ -1,11 +1,54 @@
 /* Tailwind CSS CDN */
 @import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
 
+/* Add dark mode variables */
+:root {
+    --bg-primary: #ffffff;
+    --text-primary: #1a202c;
+    --bg-secondary: #f7fafc;
+    --border-color: #e2e8f0;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #1a202c;
+    --text-primary: #f7fafc;
+    --bg-secondary: #2d3748;
+    --border-color: #4a5568;
+}
+
 /* Base Styles */
 body {
     font-family: 'Nunito', sans-serif;
-    background: linear-gradient(to right, #e0f7fa, #ffffff);
-    /* Soft gradient background */
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] .bg-white {
+    background-color: var(--bg-secondary);
+}
+
+[data-theme="dark"] .text-slate-700 {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .bg-slate-100 {
+    background-color: #2d3748;
+}
+
+[data-theme="dark"] .border-slate-200 {
+    border-color: var(--border-color);
+}
+
+/* Message Content Dark Mode */
+[data-theme="dark"] .assistant-content {
+    background-color: #2d3748;
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .message-content {
+    border: 1px solid var(--border-color);
 }
 
 /* Ensure tooltips are above other elements */
@@ -272,4 +315,154 @@ li:hover .delete-btn {
 .chain-executing {
     pointer-events: none;
     opacity: 0.7;
+}
+
+/* Main content area gradients */
+main.bg-gradient-to-br {
+    transition: background 0.3s ease;
+}
+
+[data-theme="dark"] main.bg-gradient-to-br {
+    background: linear-gradient(
+        to bottom right,
+        var(--slate-900, #0f172a),
+        var(--purple-900, #581c87),
+        var(--pink-900, #831843)
+    ) !important;
+}
+
+/* Content sections in dark mode */
+[data-theme="dark"] .bg-white {
+    background-color: rgba(30, 41, 59, 0.9) !important; /* slate-800 with opacity */
+}
+
+/* Update the from/via/to gradient classes for dark mode */
+[data-theme="dark"] .from-slate-100 {
+    --tw-gradient-from: #0f172a !important;
+}
+
+[data-theme="dark"] .via-purple-50 {
+    --tw-gradient-stops: var(--tw-gradient-from), #581c87 !important;
+}
+
+[data-theme="dark"] .to-pink-100 {
+    --tw-gradient-to: #831843 !important;
+}
+
+/* Card backgrounds in dark mode */
+[data-theme="dark"] .bg-white\/90 {
+    background-color: rgba(30, 41, 59, 0.9) !important;
+}
+
+[data-theme="dark"] .bg-slate-800\/90 {
+    background-color: rgba(30, 41, 59, 0.9) !important;
+}
+
+/* Additional dark mode styles for better contrast */
+[data-theme="dark"] .text-slate-600 {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .text-slate-500 {
+    color: #cbd5e0 !important;
+}
+
+[data-theme="dark"] .from-indigo-100 {
+    --tw-gradient-from: #312e81 !important;
+}
+
+[data-theme="dark"] .to-pink-100 {
+    --tw-gradient-to: #831843 !important;
+}
+
+
+/* Main prompt area dark mode */
+[data-theme="dark"] .bg-gradient-to-r.from-purple-100.to-pink-100 {
+    background: linear-gradient(
+        to right,
+        var(--purple-900, #581c87),
+        var(--pink-900, #831843)
+    ) !important;
+}
+
+/* Input text area dark mode */
+[data-theme="dark"] #user-input {
+    background-color: #1f2937 !important; /* darker background */
+    color: #e2e8f0 !important; /* lighter text */
+    border-color: #4b5563 !important; /* darker border */
+}
+
+[data-theme="dark"] #user-input::placeholder {
+    color: #9ca3af !important; /* gray-400 for placeholder */
+}
+
+/* Main prompt display area */
+[data-theme="dark"] #prompt-display {
+    background-color: #1f2937 !important;
+}
+
+[data-theme="dark"] #prompt-display .bg-gradient-to-r {
+    background: linear-gradient(
+        to right,
+        var(--purple-900, #581c87),
+        var(--pink-900, #831843)
+    ) !important;
+}
+
+/* Ensure text colors are visible in dark mode */
+[data-theme="dark"] .text-slate-700 {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .text-slate-600 {
+    color: #cbd5e0 !important;
+}
+
+/* Textarea and input backgrounds */
+[data-theme="dark"] .bg-slate-50 {
+    background-color: #1f2937 !important;
+}
+
+/* Section backgrounds */
+[data-theme="dark"] section.bg-white {
+    background-color: rgba(31, 41, 55, 0.95) !important; /* dark slate with slight transparency */
+}
+
+/* Chain item delete button */
+#chained-prompt-list .delete-btn {
+    display: none;
+    transition: all 0.2s ease;
+}
+
+#chained-prompt-list li:hover .delete-btn {
+    display: inline-block;
+}
+
+/* Chain item styles */
+#chained-prompt-list li {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+#chained-prompt-list li:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode specific styles for chain items */
+[data-theme="dark"] #chained-prompt-list li {
+    background-color: rgba(31, 41, 55, 0.95);
+    border-color: #4b5563;
+}
+
+[data-theme="dark"] #chained-prompt-list .delete-btn {
+    color: #ef4444;
+}
+
+[data-theme="dark"] #chained-prompt-list .delete-btn:hover {
+    color: #dc2626;
 }
