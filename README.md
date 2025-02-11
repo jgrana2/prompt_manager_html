@@ -1,6 +1,8 @@
 # LLM Prompt Manager
+![image](https://github.com/user-attachments/assets/9707da49-61e5-464c-84b6-993f8fad0b58)
+Code Name: Princess Jean
 
-A sophisticated web application for managing, chaining, and executing prompts using OpenAI's API. This application provides a modern, user-friendly interface for creating, organizing, and generating text completions with advanced features like prompt chaining and real-time response streaming.
+A sophisticated web application for managing, chaining, and executing prompts using LLMs' APIs. This application provides a modern, user-friendly interface for creating, organizing, and generating text completions with advanced features like prompt chaining and real-time response streaming.
 
 ## Key Features
 
@@ -57,7 +59,7 @@ A sophisticated web application for managing, chaining, and executing prompts us
 ### Installation
 1. Download or clone the repository
 2. Create a `config.js` file in the root directory
-3. Add your OpenAI API key to `config.js`:
+3. Add your API key to `config.js`:
    ```javascript
    window.OPENAI_API_KEY = 'your-api-key-here';
    ```
