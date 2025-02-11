@@ -95,7 +95,9 @@ const openSettingsModal = () => {
 
   // Event Listeners
   const closeModal = () => modal.remove();
-  modal.querySelector('.settings-close').addEventListener('click', closeModal);
+  modal.querySelectorAll('.settings-close').forEach(button => {
+    button.addEventListener('click', closeModal);
+  });
   
   modal.querySelector('#settings-form').addEventListener('submit', (e) => {
     e.preventDefault();
