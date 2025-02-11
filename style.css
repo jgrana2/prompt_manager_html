@@ -2,9 +2,10 @@
 @import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
 
 /* Base Styles */
-body { 
-    font-family: 'Nunito', sans-serif; 
-    background: linear-gradient(to right, #e0f7fa, #ffffff); /* Soft gradient background */
+body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(to right, #e0f7fa, #ffffff);
+    /* Soft gradient background */
 }
 
 /* Ensure tooltips are above other elements */
@@ -17,7 +18,8 @@ body {
     border-radius: 4px;
     padding: 6px 10px;
     position: absolute;
-    bottom: 125%; /* Position above the element */
+    bottom: 125%;
+    /* Position above the element */
     left: 50%;
     transform: translateX(-50%);
     opacity: 0;
@@ -28,7 +30,8 @@ body {
 .tooltip::after {
     content: '';
     position: absolute;
-    top: 100%; /* At the bottom of the tooltip */
+    top: 100%;
+    /* At the bottom of the tooltip */
     left: 50%;
     margin-left: -5px;
     border-width: 5px;
@@ -59,8 +62,13 @@ li:hover .delete-btn {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Message Container Styles */
@@ -92,7 +100,7 @@ li:hover .delete-btn {
     border-radius: 25px;
     max-width: 75%;
     word-wrap: break-word;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     transition: box-shadow 0.3s, background-color 0.3s;
 }
 
@@ -108,7 +116,7 @@ li:hover .delete-btn {
 
 /* Hover Effects */
 .clickable:hover .message-content {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Avatar Styles */
@@ -118,22 +126,25 @@ li:hover .delete-btn {
     border-radius: 50%;
     object-fit: cover;
     margin-right: 0.75rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .user-avatar {
     margin-left: 0.75rem;
-    transform: scaleX(-1); /* Mirror the user avatar */
+    transform: scaleX(-1);
+    /* Mirror the user avatar */
 }
 
 /* Scrollbar Styling for Conversation */
 #conversation {
     padding-right: 1.5rem;
-    background: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+    background: rgba(255, 255, 255, 0.8);
+    /* Semi-transparent background */
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     max-height: 60vh;
-    overflow-y: auto; /* Ensure scrollbar appears when needed */
+    overflow-y: auto;
+    /* Ensure scrollbar appears when needed */
 }
 
 #conversation::-webkit-scrollbar {
@@ -196,5 +207,69 @@ li:hover .delete-btn {
 
 /* Modal Overlay */
 #new-prompt-modal {
-    backdrop-filter: blur(5px); /* Add blur to background */
+    backdrop-filter: blur(5px);
+    /* Add blur to background */
+}
+
+/* ... existing code ... */
+
+/* Chained Prompts Styles */
+#chained-prompts {
+    min-height: 200px;
+    border: 3px dashed #cbd5e1;
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+}
+
+#chained-prompts.drag-over {
+    border-color: #8b5cf6;
+    background-color: rgba(139, 92, 246, 0.1);
+}
+
+.chained-prompt-item {
+    @apply flex items-center justify-between p-4 bg-white dark:bg-slate-700 rounded-xl shadow-sm;
+    margin: 0.5rem 0;
+    transition: transform 0.2s ease;
+}
+
+.chained-prompt-item:hover {
+    transform: translateX(4px);
+}
+
+.remove-chain-item {
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.chained-prompt-item:hover .remove-chain-item {
+    opacity: 1;
+}
+
+#run-chain-button {
+    transform-origin: center;
+    transition: all 0.3s ease;
+}
+
+#run-chain-button:active {
+    transform: scale(0.98);
+}
+
+/* Empty State Message */
+#chained-prompts p {
+    @apply text-slate-400 text-center py-8;
+}
+
+/* Dragging States */
+.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-drag {
+    cursor: grabbing;
+}
+
+/* Chain Execution Indicator */
+.chain-executing {
+    pointer-events: none;
+    opacity: 0.7;
 }

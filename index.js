@@ -18,13 +18,16 @@ const elements = {
   userInputField: document.getElementById('user-input'),
   runButton: document.getElementById('run-button'),
   userInputTooltip: document.getElementById('user-input-tooltip'),
+  chainSection: document.getElementById('chained-prompts').closest('section'),
+  chainedPromptList: document.getElementById('chained-prompt-list'),
 };
 
-const { 
-  promptList, searchBar, clearSearchBtn, newPromptBtn, newPromptModal, 
-  cancelBtn, closeModalBtn, saveBtn, newPromptText, promptDisplay, conversation, 
-  initialInstruction, contentContainer, userInputField, runButton, 
-  userInputTooltip 
+const {
+  promptList, searchBar, clearSearchBtn, newPromptBtn, newPromptModal,
+  cancelBtn, closeModalBtn, saveBtn, newPromptText, promptDisplay, conversation,
+  initialInstruction, contentContainer, userInputField, runButton,
+  userInputTooltip, chainSection,
+  chainedPromptList
 } = elements;
 
 const OPENAI_API_KEY = window.OPENAI_API_KEY;
@@ -57,23 +60,262 @@ const createElement = (tag, className, attributes = {}) => {
   return el;
 };
 
+// Update the createPromptListItem function
 const createPromptListItem = (text) => {
-  const li = createElement('li', "py-3 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition duration-200 rounded-lg px-3", { 'data-prompt': text });
+  const li = createElement('li', "prompt-item p-4 bg-slate-100 dark:bg-slate-700 rounded-xl shadow-md cursor-grab", {
+    'data-prompt': text,
+    'draggable': 'true'
+  });
 
-  const span = createElement('span', "text-gray-700");
-  span.textContent = text.length > 50 ? `${text.slice(0, 50)}...` : text;
-  li.appendChild(span);
+  const contentDiv = createElement('div', "flex justify-between items-center");
+
+  const titleSpan = createElement('span', "prompt-title text-slate-700 dark:text-slate-300");
+  titleSpan.textContent = text.length > 50 ? `${text.slice(0, 50)}...` : text;
 
   const deleteBtn = createElement('button', "delete-btn text-red-500 hover:text-red-700", { title: "Delete Prompt" });
-  deleteBtn.textContent = "🗑️";
-  li.appendChild(deleteBtn);
+  deleteBtn.innerHTML = `
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+  `;
+
+  contentDiv.appendChild(titleSpan);
+  contentDiv.appendChild(deleteBtn);
+  li.appendChild(contentDiv);
 
   return li;
 };
 
+// Helper Function to Run a Single Prompt
+const runSinglePrompt = async (promptText, previousResponse = '') => {
+  messages = [{ role: "system", content: promptText }];
+
+  if (previousResponse) {
+    messages.push({ role: "user", content: previousResponse });
+  }
+  try {
+    const stream = await sendPromptToOpenAI(messages);
+    const assistantResponse = await streamResponse(stream);
+    messages.push({ role: "assistant", content: assistantResponse });
+    return assistantResponse;
+  } catch (error) {
+    console.error('Error in runSinglePrompt:', error);
+    throw error;
+  }
+};
+
+// Update the Sortable creation and chain handling
+document.addEventListener('DOMContentLoaded', () => {
+  const promptList = document.getElementById('prompt-list');
+  const chainedPromptList = document.getElementById('chained-prompt-list');
+  Sortable.create(promptList, {
+    group: {
+      name: 'prompts',
+      pull: 'clone',
+      put: false
+    },
+    sort: false,
+    animation: 150,
+    ghostClass: 'opacity-50',
+    onClone: function (evt) {
+      const item = evt.item;
+      const originalText = item.getAttribute('data-prompt');
+
+      item.innerHTML = `
+        <div class="flex justify-between items-center">
+            <span class="prompt-title text-slate-700 dark:text-slate-300">${originalText}</span>
+          </div>
+      `;
+    }
+  });
+
+  Sortable.create(chainedPromptList, {
+    group: {
+      name: 'prompts',
+      pull: false,
+      put: true
+    },
+    animation: 150,
+    ghostClass: 'opacity-50',
+    onAdd: function (evt) {
+      const item = evt.item;
+      addRemoveButton(item);
+      updateChainUI();
+    },
+    onRemove: function () {
+      updateChainUI();
+    },
+    onSort: function () {
+      updateChainUI();
+    }
+  });
+
+      updateChainUI();
+});
+
+// Function to Update Chain UI Elements
+const updateChainUI = () => {
+  const hasChainedPrompts = chainedPromptList.children.length > 0;
+  
+  Array.from(chainedPromptList.children).forEach((item, index) => {
+      let numberBadge = item.querySelector('.chain-number');
+      if (!numberBadge) {
+          numberBadge = createElement('span', 'chain-number inline-flex items-center justify-center px-2 py-1 mr-2 bg-blue-500 text-white text-sm font-medium rounded-full');
+          item.querySelector('.flex').insertBefore(numberBadge, item.querySelector('.flex').firstChild);
+      }
+      numberBadge.textContent = `${index + 1}`;
+  });
+};
+
+// Message display function
+function addMessage(sender, text) {
+  const conversation = document.getElementById('conversation');
+  if (!conversation) {
+      console.error('Conversation element not found');
+      return;
+  }
+
+  const message = document.createElement('div');
+  message.className = `message ${sender}-message clickable`;
+  
+  // Create the message HTML structure
+  message.innerHTML = `
+      <img src="https://i.pravatar.cc/40?img=${sender === 'ai' ? '5' : '3'}" alt="${sender === 'ai' ? 'Assistant' : 'User'} Avatar" class="avatar ${sender === 'user' ? 'user-avatar' : ''}">
+      <div class="message-content ${sender}-content">
+          ${marked.parse(text)}
+      </div>
+      <div class="tooltip">Copied!</div>
+  `;
+
+  conversation.appendChild(message);
+  conversation.scrollTop = conversation.scrollHeight;
+
+  // Add click-to-copy functionality
+  message.addEventListener('click', () => copyToClipboard(text, message));
+}
+
+// AI Response function for chain
+async function getAIResponse(prompt) {
+  try {
+      // Create messages array for this specific prompt
+      const messages = [{ role: "user", content: prompt }];
+
+      // Use the existing OpenAI API call function to get a stream
+      const stream = await sendPromptToOpenAI(messages);
+      const reader = stream.getReader();
+      
+      // Use the existing streamResponse function to handle the streaming
+      const response = await streamResponse(reader);
+      return response;
+  } catch (error) {
+      console.error('Error in getAIResponse:', error);
+      throw new Error(`Failed to get AI response: ${error.message}`);
+  }
+}
+
+// Run Chain Handler
+async function handleRunChain(initialInput) {
+  try {
+      console.log('Starting handleRunChain with initial input:', initialInput);
+      const prompts = Array.from(chainedPromptList?.children || []).map(item => {
+          const promptTitle = item.querySelector('.prompt-title');
+          return promptTitle ? promptTitle.innerText : null;
+      }).filter(prompt => prompt !== null);
+
+      if (prompts.length === 0) {
+          return;
+      }
+
+      let input = initialInput; // Use the main prompt's response as initial input
+
+      for (let i = 0; i < prompts.length; i++) {
+          const prompt = prompts[i];
+          console.log(`Processing chain prompt ${i + 1}:`, prompt);
+          
+          try {
+              // Display the current prompt
+              addMessage('user', `Chain Step ${i + 1}: ${prompt}`);
+              
+              // Create messages for this step
+              const messages = [{ role: "user", content: `${prompt}\n\nInput: ${input}` }];
+              
+              // Get streaming response
+              const stream = await sendPromptToOpenAI(messages);
+              const reader = stream.getReader();
+              
+              // Use streamResponse to handle the streaming display
+              const response = await streamResponse(reader);
+              console.log(`Received chain response for prompt ${i + 1}:`, response);
+              
+              // Use this response as input for the next prompt
+              input = response;
+          } catch (innerError) {
+              console.error(`Error processing chain prompt ${i + 1}:`, innerError);
+              addMessage('ai', `Error: ${innerError.message}`);
+              return;
+          }
+      }
+
+      console.log('Chain execution completed successfully');
+      
+  } catch (error) {
+      console.error('Detailed error in handleRunChain:', {
+          error: error,
+          message: error.message,
+          stack: error.stack
+      });
+      addMessage('ai', `Error running the prompt chain: ${error.message}`);
+  }
+}
+
 const renderPrompts = () => {
   promptList.innerHTML = '';
   prompts.forEach(text => promptList.appendChild(createPromptListItem(text)));
+};
+
+// Dark Mode Functionality
+const initializeTheme = () => {
+  const toggleButton = document.getElementById('dark-mode-toggle');
+  const sunIcon = document.getElementById('theme-sun-icon');
+  const moonIcon = document.getElementById('theme-moon-icon');
+
+  const updateIcons = (isDark) => {
+    if (isDark) {
+      sunIcon.classList.remove('hidden');
+      moonIcon.classList.add('hidden');
+    } else {
+      sunIcon.classList.add('hidden');
+      moonIcon.classList.remove('hidden');
+    }
+  };
+
+  const setTheme = (theme) => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      updateIcons(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      updateIcons(false);
+    }
+  };
+
+  const initialize = () => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(prefersDark ? 'dark' : 'light');
+    }
+  };
+
+  toggleButton.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    updateIcons(isDark);
+});
+
+  initialize();
 };
 
 // Event Handlers
@@ -81,75 +323,100 @@ const handlePromptClick = (promptText) => {
   if (!conversation.classList.contains('hidden')) {
     conversation.classList.add('hidden');
   }
-  
+
   if (initialInstruction.style.display !== 'none') {
     initialInstruction.style.display = 'none';
     contentContainer.classList.remove('hidden');
   }
 
+  chainSection.classList.remove('hidden');
+
+  promptDisplay.innerHTML = `
+    <div class="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 p-4 rounded-xl border-2 border-purple-200 dark:border-purple-700">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="inline-flex items-center justify-center px-3 py-1 bg-purple-500 text-white text-sm font-medium rounded-full">
+          Main Prompt
+        </span>
+      </div>
+      <div class="text-slate-700 dark:text-slate-300">
+        ${marked.parse(promptText)}
+      </div>
+    </div>
+  `;
+
   conversation.innerHTML = '';
   messages = [];
-  promptDisplay.textContent = promptText;
   messages.push({ role: "system", content: promptText });
   userInputField.value = '';
   userInputField.focus();
 };
 
-const handleDeletePrompt = (promptText, li) => {
-  prompts = prompts.filter(p => p !== promptText);
-  savePrompts(prompts);
-  li.remove();
-};
-
 const handleRun = async () => {
   const userInput = userInputField.value.trim();
   if (!userInput) {
-    alert("Please enter some input before running the prompt.");
-    return;
+      alert("Please enter some input before running the prompt.");
+      return;
   }
 
   if (conversation.classList.contains('hidden')) {
-    conversation.classList.remove('hidden');
+      conversation.classList.remove('hidden');
   }
 
-  const formattedInput = `:"""${userInput}"""`;
-  messages.push({ role: "user", content: formattedInput });
+  // Get the main prompt from the promptDisplay
+  const mainPromptElement = promptDisplay.querySelector('.text-slate-700, .dark\\:text-slate-300');
+  if (!mainPromptElement) {
+      alert("Please select a main prompt first.");
+      return;
+  }
+  const mainPrompt = mainPromptElement.textContent.trim();
 
+  // Process main prompt first
+  const formattedInput = `:"""${userInput}"""`;
+  messages = [
+      { role: "system", content: mainPrompt },
+      { role: "user", content: formattedInput }
+  ];
+
+  // Display user input
   const userMessage = createElement('div', "message user-message clickable");
   userMessage.innerHTML = `
-    <img src="https://i.pravatar.cc/40?img=3" alt="User Avatar" class="avatar user-avatar">
-    <div class="message-content user-content">
-      ${userInput}
-    </div>
-    <div class="tooltip">Copied!</div>
+      <img src="https://i.pravatar.cc/40?img=3" alt="User Avatar" class="avatar user-avatar">
+      <div class="message-content user-content">
+          ${userInput}
+      </div>
+      <div class="tooltip">Copied!</div>
   `;
   conversation.appendChild(userMessage);
   conversation.scrollTop = conversation.scrollHeight;
 
   userMessage.addEventListener('click', () => copyToClipboard(userInput, userMessage));
 
-  // Update run button state
   runButton.disabled = true;
   runButton.textContent = "Running...";
   runButton.classList.replace('bg-blue-500', 'bg-blue-400');
   runButton.classList.add('cursor-not-allowed');
 
   try {
-    const stream = await sendPromptToOpenAI(messages);
-    const reader = stream.getReader();
-    await streamResponse(reader);
-  } catch (error) {
-    console.error(error);
-    displayAssistantMessage("Error communicating with OpenAI API.", true);
-  } finally {
-    // Restore run button state
-    runButton.disabled = false;
-    runButton.textContent = "Run";
-    runButton.classList.replace('bg-blue-400', 'bg-blue-500');
-    runButton.classList.remove('cursor-not-allowed');
-    runButton.classList.add('hover:bg-blue-700');
+      // Process main prompt
+      const stream = await sendPromptToOpenAI(messages);
+      const reader = stream.getReader();
+      const mainResponse = await streamResponse(reader);
 
-    userInputField.value = '';
+      // If there are chained prompts, process them with the main prompt's response
+      if (chainedPromptList.children.length > 0) {
+          await handleRunChain(mainResponse);
+      }
+  } catch (error) {
+      console.error(error);
+      displayAssistantMessage("Error communicating with OpenAI API.", true);
+  } finally {
+      runButton.disabled = false;
+      runButton.textContent = "Run";
+      runButton.classList.replace('bg-blue-400', 'bg-blue-500');
+      runButton.classList.remove('cursor-not-allowed');
+      runButton.classList.add('hover:bg-blue-700');
+
+      userInputField.value = '';
   }
 };
 
@@ -159,7 +426,7 @@ const sendPromptToOpenAI = async (messages) => {
     messages,
     stream: true,
     max_tokens: 4096,
-  };
+};
 
   try {
     const response = await fetch(OPENAI_API_URL, {
@@ -183,18 +450,18 @@ const sendPromptToOpenAI = async (messages) => {
   }
 };
 
-const streamResponse = (reader) => new Promise((resolve, reject) => {
+const streamResponse = (streamBody) => new Promise((resolve, reject) => {
   const decoder = new TextDecoder();
   let buffer = '';
   let assistantContent = '';
 
   const assistantMessage = createElement('div', "message assistant-message clickable");
   assistantMessage.innerHTML = `
-    <img src="https://i.pravatar.cc/40?img=5" alt="Assistant Avatar" class="avatar">
-    <div class="message-content assistant-content">
-      <span class="loading-spinner">⏳</span>
-    </div>
-    <div class="tooltip">Copied!</div>
+      <img src="https://i.pravatar.cc/40?img=5" alt="Assistant Avatar" class="avatar">
+      <div class="message-content assistant-content">
+          <span class="loading-spinner">⏳</span>
+      </div>
+      <div class="tooltip">Copied!</div>
   `;
   conversation.appendChild(assistantMessage);
   conversation.scrollTop = conversation.scrollHeight;
@@ -204,52 +471,52 @@ const streamResponse = (reader) => new Promise((resolve, reject) => {
   assistantMessage.addEventListener('click', () => copyToClipboard(assistantContent, assistantMessage));
 
   const read = async () => {
-    try {
-      const { done, value } = await reader.read();
-      if (done) {
-        finalizeResponse();
-        return;
-      }
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-
-      lines.forEach(line => {
-        line = line.trim();
-        if (!line.startsWith('data: ')) return;
-
-        const jsonStr = line.replace(/^data:\s*/, '');
-        if (jsonStr === '[DONE]') {
-          finalizeResponse();
-          return;
-        }
-
-        try {
-          const parsed = JSON.parse(jsonStr);
-          const deltaContent = parsed.choices[0]?.delta?.content;
-          if (deltaContent) {
-            assistantContent += deltaContent;
-            contentDiv.innerHTML = marked.parse(assistantContent);
-            conversation.scrollTop = conversation.scrollHeight;
+      try {
+          const { done, value } = await streamBody.read();
+          if (done) {
+              finalizeResponse();
+              return;
           }
-        } catch (e) {
-          console.error('Error parsing JSON:', e);
-        }
-      });
 
-      read();
-    } catch (error) {
-      console.error("Error reading stream:", error);
-      reject(error);
-    }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          lines.forEach(line => {
+              line = line.trim();
+              if (!line.startsWith('data: ')) return;
+
+              const jsonStr = line.replace(/^data:\s*/, '');
+              if (jsonStr === '[DONE]') {
+                  finalizeResponse();
+                  return;
+              }
+
+              try {
+                  const parsed = JSON.parse(jsonStr);
+                  const deltaContent = parsed.choices[0]?.delta?.content;
+                  if (deltaContent) {
+                      assistantContent += deltaContent;
+                      contentDiv.innerHTML = marked.parse(assistantContent);
+                      conversation.scrollTop = conversation.scrollHeight;
+                  }
+              } catch (e) {
+                  console.error('Error parsing JSON:', e);
+              }
+          });
+
+          read();
+      } catch (error) {
+          console.error("Error reading stream:", error);
+          reject(error);
+      }
   };
 
   const finalizeResponse = () => {
-    contentDiv.innerHTML = marked.parse(assistantContent);
-    conversation.scrollTop = conversation.scrollHeight;
-    messages.push({ role: "assistant", content: assistantContent });
-    resolve();
+      contentDiv.innerHTML = marked.parse(assistantContent);
+      conversation.scrollTop = conversation.scrollHeight;
+      messages.push({ role: "assistant", content: assistantContent });
+      resolve(assistantContent); // Return the assistant's response
   };
 
   read();
@@ -271,7 +538,6 @@ const displayAssistantMessage = (text, isError = false) => {
   assistantMessage.addEventListener('click', () => copyToClipboard(text, assistantMessage));
 };
 
-// Clipboard Function
 const copyToClipboard = (text, element) => {
   navigator.clipboard.writeText(text).then(() => {
     element.classList.add('show-tooltip');
@@ -281,7 +547,6 @@ const copyToClipboard = (text, element) => {
   });
 };
 
-// Modal Handlers
 const openNewPromptModal = () => {
   newPromptModal.classList.remove('hidden');
   newPromptText.focus();
@@ -302,11 +567,10 @@ const saveNewPrompt = () => {
   }
 };
 
-// Search Handlers
 const handleSearch = () => {
   const query = searchBar.value.toLowerCase();
   clearSearchBtn.classList.toggle('hidden', query.length === 0);
-  
+
   Array.from(promptList.children).forEach(li => {
     const text = li.getAttribute('data-prompt').toLowerCase();
     li.style.display = text.includes(query) ? 'flex' : 'none';
@@ -320,7 +584,6 @@ const clearSearch = () => {
   searchBar.focus();
 };
 
-// Keyboard Handler
 const handleInputKeyDown = (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
@@ -328,10 +591,9 @@ const handleInputKeyDown = (e) => {
   }
 };
 
-// Initial Render
 document.addEventListener('DOMContentLoaded', renderPrompts);
+document.addEventListener('DOMContentLoaded', initializeTheme);
 
-// Event Listeners
 newPromptBtn.addEventListener('click', openNewPromptModal);
 cancelBtn.addEventListener('click', closeNewPromptModal);
 closeModalBtn.addEventListener('click', closeNewPromptModal);
@@ -340,9 +602,9 @@ saveBtn.addEventListener('click', saveNewPrompt);
 promptList.addEventListener('click', (e) => {
   const li = e.target.closest('li');
   if (!li) return;
-  
+
   const promptText = li.getAttribute('data-prompt');
-  
+
   if (e.target.classList.contains('delete-btn')) {
     handleDeletePrompt(promptText, li);
   } else {
@@ -358,3 +620,32 @@ userInputField.addEventListener('click', () => {
   if (text) copyToClipboard(text, userInputTooltip.parentElement);
 });
 runButton.addEventListener('click', handleRun);
+
+const handleDeletePrompt = (promptText, listItem) => {
+  if (confirm('Are you sure you want to delete this prompt?')) {
+    prompts = prompts.filter(prompt => prompt !== promptText);
+    savePrompts(prompts);
+    listItem.remove();
+  }
+};
+
+const addRemoveButton = (item) => {
+  const promptTitle = item.querySelector('.prompt-title');
+  if (promptTitle) {
+    item.setAttribute('data-prompt', promptTitle.textContent);
+  }
+
+  const removeBtn = createElement('button', 'remove-chain-item ml-2 text-red-500 hover:text-red-700 transition-colors');
+  removeBtn.innerHTML = `
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+  `;
+  removeBtn.onclick = () => {
+    item.remove();
+    updateChainUI();
+  };
+
+  const container = item.querySelector('.flex') || item;
+  container.appendChild(removeBtn);
+};
