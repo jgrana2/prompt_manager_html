@@ -248,7 +248,15 @@ li:hover .delete-btn {
 /* Modal Overlay */
 #new-prompt-modal {
     backdrop-filter: blur(5px);
-    /* Add blur to background */
+    display: flex !important; /* Override any other display properties */
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ensure the modal content stays centered */
+#new-prompt-modal > div {
+    margin: 0 auto; /* Center horizontally */
+    transform: none !important; /* Remove any existing transform */
 }
 
 /* ... existing code ... */
