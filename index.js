@@ -773,7 +773,10 @@ promptList.addEventListener('click', (e) => {
 
   const promptText = li.getAttribute('data-prompt');
 
-  if (e.target.classList.contains('delete-btn')) {
+  // Check if the clicked element is the delete button or its SVG/path
+  if (e.target.closest('.delete-btn')) {
+    e.preventDefault();
+    e.stopPropagation();
     handleDeletePrompt(promptText, li);
   } else {
     handlePromptClick(promptText);
