@@ -21,7 +21,7 @@
       <div class="relative group">
         <div class="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full opacity-80 group-hover:opacity-100 blur transition duration-300"></div>
         <img src="https://i.pravatar.cc/50?img=5" alt="Assistant Avatar" class="relative w-14 h-14 rounded-full object-cover border-2 border-white shadow-md">
-        <div class="absolute -bottom-2 -right-2 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white"></div>
+        <div class="absolute -bottom-2 -right-2 w-5 h-5 rounded-full border-2 border-white" style="background-color: #10b981;"></div>
       </div>
       <div class="flex flex-col">
         <h1 class="text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 text-transparent bg-clip-text">Princess Jean</h1>
@@ -164,40 +164,39 @@
   </div>
 
   <!-- Enhanced Modal -->
-  <div id="new-prompt-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm items-center justify-center hidden z-50">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 md:p-10 w-11/12 sm:w-3/4 md:w-2/5 max-w-4xl transform transition-opacity duration-300 scale-95">
-      <div class="flex justify-between items-center mb-6">
-        <h3 class="text-2xl font-semibold text-slate-800 dark:text-slate-200">Create New Prompt</h3>
-        <button id="modal-close" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors" aria-label="Close Modal">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-      <form id="new-prompt-form" class="space-y-8">
-        <!-- Form Content -->
-        <textarea
-          id="new-prompt-text"
-          class="w-full p-6 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-3xl text-slate-700 dark:text-slate-300 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 resize-none shadow-inner"
-          rows="8"
-          placeholder="Enter your prompt here..."
-          aria-label="New Prompt Text"
-          required
-        ></textarea>
-        <div class="flex justify-end space-x-5">
-          <button type="button" id="cancel-btn" class="px-7 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-full transition-colors shadow-md">
-            Cancel
-          </button>
-          <button type="submit" id="save-btn" class="group relative px-8 py-3 font-semibold text-white rounded-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-lg">
-            <span class="flex items-center space-x-3">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              <span class="text-lg">Save Prompt</span>
-            </span>
-          </button>
+  <div id="new-prompt-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center hidden z-50">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 md:p-10 w-11/12 sm:w-3/4 md:w-2/5 max-w-4xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-semibold text-slate-800 dark:text-slate-200">Create New Prompt</h3>
+            <button id="modal-close" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors" aria-label="Close Modal">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
-      </form>
+        <form id="new-prompt-form" class="space-y-8">
+            <textarea
+                id="new-prompt-text"
+                class="w-full p-6 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-3xl text-slate-700 dark:text-slate-300 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 resize-none shadow-inner"
+                rows="8"
+                placeholder="Enter your prompt here..."
+                aria-label="New Prompt Text"
+                required
+            ></textarea>
+            <div class="flex justify-end space-x-5">
+                <button type="button" id="cancel-btn" class="px-7 py-3 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-full transition-colors shadow-md">
+                    Cancel
+                </button>
+                <button type="submit" id="save-btn" class="group relative px-8 py-3 font-semibold text-white rounded-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-lg">
+                    <span class="flex items-center space-x-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span class="text-lg">Save Prompt</span>
+                    </span>
+                </button>
+            </div>
+        </form>
     </div>
   </div>
 
