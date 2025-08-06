@@ -1,9 +1,12 @@
+
 /* Add dark mode variables */
 :root {
     --bg-primary: #ffffff;
     --text-primary: #1a202c;
     --bg-secondary: #f7fafc;
     --border-color: #e2e8f0;
+    --variable-highlight-bg: #ebf5ff;
+    --variable-highlight-bg-dark: #1e3a8a;
 }
 
 [data-theme="dark"] {
@@ -245,18 +248,68 @@ li:hover .delete-btn {
     }
 }
 
+/* Variable System Styles */
+.variable-mapping-container {
+    margin-top: 0.75rem;
+    border-top: 1px dashed var(--border-color);
+}
+
+.variable-mapping {
+    transition: all 0.2s ease;
+}
+
+.variable-mapping:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .variable-mapping:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.variable-highlight {
+    background-color: var(--variable-highlight-bg);
+    border-radius: 3px;
+    padding: 0 2px;
+}
+
+[data-theme="dark"] .variable-highlight {
+    background-color: var(--variable-highlight-bg-dark);
+}
+
+.editor-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.highlighter {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: transparent;
+    overflow: auto;
+}
+
+.editor-textarea {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background: transparent;
+    color: inherit;
+    resize: none;
+    overflow: auto;
+}
+
 /* Modal Overlay */
 #new-prompt-modal {
     backdrop-filter: blur(5px);
-    display: flex !important; /* Override any other display properties */
-    align-items: center;
-    justify-content: center;
 }
 
 /* Ensure the modal content stays centered */
 #new-prompt-modal > div {
-    margin: 0 auto; /* Center horizontally */
-    transform: none !important; /* Remove any existing transform */
+    margin: 0 auto;
+    transform: none !important;
 }
 
 /* ... existing code ... */
