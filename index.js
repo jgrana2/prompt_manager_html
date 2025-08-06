@@ -40,6 +40,395 @@ const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 let messages = [];
 
+// Variable System - New Code
+// -------------------------------------------------------------------------
+
+// Extract variables from prompt text
+const extractVariables = (promptText) => {
+  const variableRegex = /\{\{([^}]+)\}\}/g;
+  const variables = [];
+  let match;
+  
+  while ((match = variableRegex.exec(promptText)) !== null) {
+    const [fullMatch, variableName] = match;
+    // Handle default values if present
+    const [name, defaultValue] = variableName.split(':').map(s => s.trim());
+    variables.push({ 
+      fullMatch, 
+      name, 
+      defaultValue,
+      startIndex: match.index
+    });
+  }
+  
+  return variables;
+};
+
+// Create a variable mapping UI for a chain item
+const createVariableMappingUI = (chainItem) => {
+  // Remove any existing variable mapping UI
+  const existingMapping = chainItem.querySelector('.variable-mapping-container');
+  if (existingMapping) {
+    existingMapping.remove();
+  }
+  
+  const promptText = chainItem.getAttribute('data-prompt');
+  const variables = extractVariables(promptText);
+  
+  if (variables.length === 0) {
+    return; // No variables to map
+  }
+  
+  // Create container for variable mappings
+  const container = createElement('div', 'variable-mapping-container mt-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg');
+  
+  // Create header
+  const header = createElement('div', 'flex items-center justify-between mb-2');
+  const title = createElement('h4', 'text-sm font-medium text-slate-700 dark:text-slate-300');
+  title.textContent = 'Variable Mappings';
+  
+  const toggleBtn = createElement('button', 'text-xs text-blue-500 hover:text-blue-700');
+  toggleBtn.textContent = 'Show/Hide';
+  toggleBtn.addEventListener('click', () => {
+    const mappingsContent = container.querySelector('.variable-mappings-content');
+    mappingsContent.classList.toggle('hidden');
+  });
+  
+  header.appendChild(title);
+  header.appendChild(toggleBtn);
+  container.appendChild(header);
+  
+  // Create content container
+  const mappingsContent = createElement('div', 'variable-mappings-content space-y-2');
+  
+  // Get existing mappings or initialize empty ones
+  let variableMappings = JSON.parse(chainItem.getAttribute('data-variable-mappings') || '[]');
+  
+  // Create mapping UI for each variable
+  variables.forEach(variable => {
+    // Find existing mapping or create default
+    let mapping = variableMappings.find(m => m.variable === variable.name);
+    if (!mapping) {
+      mapping = {
+        variable: variable.name,
+        source: { type: "manual", defaultValue: variable.defaultValue || '' }
+      };
+      variableMappings.push(mapping);
+    }
+    
+    const mappingRow = createVariableMappingRow(variable, mapping, chainItem);
+    mappingsContent.appendChild(mappingRow);
+  });
+  
+  container.appendChild(mappingsContent);
+  chainItem.appendChild(container);
+  
+  // Save the mappings to the chain item
+  chainItem.setAttribute('data-variable-mappings', JSON.stringify(variableMappings));
+  
+  return container;
+};
+
+// Create a single variable mapping row
+const createVariableMappingRow = (variable, mapping, chainItem) => {
+  const row = createElement('div', 'variable-mapping flex flex-wrap items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded-lg');
+  
+  // Variable name
+  const nameLabel = createElement('div', 'text-xs font-medium text-slate-800 dark:text-slate-200');
+  nameLabel.textContent = `{{${variable.name}}}`;
+  
+  // Source type selector
+  const sourceTypeSelect = createElement('select', 'text-xs p-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800');
+  
+  const sourceTypes = [
+    { value: 'manual', text: 'Manual Input' },
+    { value: 'step', text: 'Step Output' },
+    { value: 'system', text: 'System Variable' }
+  ];
+  
+  sourceTypes.forEach(type => {
+    const option = document.createElement('option');
+    option.value = type.value;
+    option.textContent = type.text;
+    sourceTypeSelect.appendChild(option);
+  });
+  
+  sourceTypeSelect.value = mapping.source.type;
+  
+  // Source details container
+  const sourceDetailsContainer = createElement('div', 'source-details flex-grow');
+  
+  // Initial source details based on current mapping
+  updateSourceDetails(sourceDetailsContainer, mapping.source, chainItem);
+  
+  // Handle source type changes
+  sourceTypeSelect.addEventListener('change', () => {
+    const newSourceType = sourceTypeSelect.value;
+    const newSource = { type: newSourceType };
+    
+    if (newSourceType === 'manual' && mapping.source.defaultValue) {
+      newSource.defaultValue = mapping.source.defaultValue;
+    }
+    
+    mapping.source = newSource;
+    updateSourceDetails(sourceDetailsContainer, newSource, chainItem);
+    
+    // Update the variable mappings in the chain item
+    const variableMappings = JSON.parse(chainItem.getAttribute('data-variable-mappings') || '[]');
+    const mappingIndex = variableMappings.findIndex(m => m.variable === mapping.variable);
+    if (mappingIndex >= 0) {
+      variableMappings[mappingIndex] = mapping;
+    } else {
+      variableMappings.push(mapping);
+    }
+    chainItem.setAttribute('data-variable-mappings', JSON.stringify(variableMappings));
+  });
+  
+  // Assemble row
+  row.appendChild(nameLabel);
+  row.appendChild(sourceTypeSelect);
+  row.appendChild(sourceDetailsContainer);
+  
+  return row;
+};
+
+// Update source details based on source type
+const updateSourceDetails = (container, source, chainItem) => {
+  container.innerHTML = '';
+  
+  switch (source.type) {
+    case 'manual':
+      const defaultInput = createElement('input', 'text-xs p-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800');
+      defaultInput.type = 'text';
+      defaultInput.placeholder = 'Default value (optional)';
+      defaultInput.value = source.defaultValue || '';
+      
+      defaultInput.addEventListener('change', () => {
+        source.defaultValue = defaultInput.value;
+        
+        // Update the variable mappings in the chain item
+        const variableMappings = JSON.parse(chainItem.getAttribute('data-variable-mappings') || '[]');
+        const mapping = variableMappings.find(m => m.source === source);
+        if (mapping) {
+          mapping.source.defaultValue = defaultInput.value;
+          chainItem.setAttribute('data-variable-mappings', JSON.stringify(variableMappings));
+        }
+      });
+      
+      container.appendChild(defaultInput);
+      break;
+      
+    case 'step':
+      const stepSelect = createElement('select', 'text-xs p-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800');
+      
+      // Add options for all previous steps
+      const allItems = Array.from(document.querySelectorAll('#chained-prompt-list li'));
+      const currentIndex = allItems.indexOf(chainItem);
+      
+      for (let i = 0; i < currentIndex; i++) {
+        const item = allItems[i];
+        const stepNumber = i + 1;
+        const stepTitle = item.querySelector('.prompt-title')?.textContent || `Step ${stepNumber}`;
+        const option = document.createElement('option');
+        option.value = item.dataset.id || `chain-item-${i}`;
+        option.textContent = `Step ${stepNumber}: ${stepTitle.substring(0, 20)}...`;
+        stepSelect.appendChild(option);
+      }
+      
+      if (source.stepId) {
+        stepSelect.value = source.stepId;
+      } else if (stepSelect.options.length > 0) {
+        source.stepId = stepSelect.options[0].value;
+      }
+      
+      stepSelect.addEventListener('change', () => {
+        source.stepId = stepSelect.value;
+        
+        // Update the variable mappings in the chain item
+        const variableMappings = JSON.parse(chainItem.getAttribute('data-variable-mappings') || '[]');
+        const mapping = variableMappings.find(m => m.source === source);
+        if (mapping) {
+          mapping.source.stepId = stepSelect.value;
+          chainItem.setAttribute('data-variable-mappings', JSON.stringify(variableMappings));
+        }
+      });
+      
+      container.appendChild(stepSelect);
+      break;
+      
+    case 'system':
+      const systemVarSelect = createElement('select', 'text-xs p-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800');
+      
+      const systemVars = [
+        { value: 'date', text: 'Current Date' },
+        { value: 'time', text: 'Current Time' },
+        { value: 'datetime', text: 'Date and Time' }
+      ];
+      
+      systemVars.forEach(sysVar => {
+        const option = document.createElement('option');
+        option.value = sysVar.value;
+        option.textContent = sysVar.text;
+        systemVarSelect.appendChild(option);
+      });
+      
+      if (source.variable) {
+        systemVarSelect.value = source.variable;
+      } else {
+        source.variable = systemVars[0].value;
+      }
+      
+      systemVarSelect.addEventListener('change', () => {
+        source.variable = systemVarSelect.value;
+        
+        // Update the variable mappings in the chain item
+        const variableMappings = JSON.parse(chainItem.getAttribute('data-variable-mappings') || '[]');
+        const mapping = variableMappings.find(m => m.source === source);
+        if (mapping) {
+          mapping.source.variable = systemVarSelect.value;
+          chainItem.setAttribute('data-variable-mappings', JSON.stringify(variableMappings));
+        }
+      });
+      
+      container.appendChild(systemVarSelect);
+      break;
+  }
+};
+
+// Get system variable value
+const getSystemVariable = (variable) => {
+  const now = new Date();
+  
+  switch (variable) {
+    case "date":
+      return now.toLocaleDateString();
+    case "time":
+      return now.toLocaleTimeString();
+    case "datetime":
+      return now.toLocaleString();
+    default:
+      return `[Unknown system variable: ${variable}]`;
+  }
+};
+
+// Request manual input from user
+const requestManualInput = (prompt, defaultValue = '') => {
+  return new Promise((resolve) => {
+    const modalHtml = `
+      <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 w-11/12 max-w-2xl">
+          <h3 class="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-200">${prompt}</h3>
+          <textarea id="manual-input" class="w-full p-4 border rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300" rows="5">${defaultValue}</textarea>
+          <div class="flex justify-end mt-4">
+            <button id="submit-manual-input" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Continue</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const modalElement = document.createElement('div');
+    modalElement.innerHTML = modalHtml;
+    document.body.appendChild(modalElement);
+    
+    document.getElementById('submit-manual-input').addEventListener('click', () => {
+      const input = document.getElementById('manual-input').value;
+      document.body.removeChild(modalElement);
+      resolve(input);
+    });
+  });
+};
+
+// Resolve variables in a prompt
+const resolveVariables = async (promptText, variableMappings, stepResponses) => {
+  let resolvedText = promptText;
+  
+  // Extract all variables from the prompt text
+  const variables = extractVariables(promptText);
+  
+  // Resolve each variable
+  for (const variable of variables) {
+    const mapping = variableMappings.find(m => m.variable === variable.name);
+    
+    if (!mapping) {
+      // No mapping found, use default value or placeholder
+      const value = variable.defaultValue || `[${variable.name}]`;
+      resolvedText = resolvedText.replace(variable.fullMatch, value);
+      continue;
+    }
+    
+    let value;
+    switch (mapping.source.type) {
+      case "step":
+        // Get value from a previous step's output
+        value = stepResponses.get(mapping.source.stepId) || '';
+        break;
+        
+      case "manual":
+        // Request input from user
+        const prompt = `Enter value for ${variable.name}:`;
+        const defaultVal = mapping.source.defaultValue || variable.defaultValue || '';
+        value = await requestManualInput(prompt, defaultVal);
+        break;
+        
+      case "system":
+        // Get value from system variables
+        value = getSystemVariable(mapping.source.variable);
+        break;
+    }
+    
+    resolvedText = resolvedText.replace(variable.fullMatch, value);
+  }
+  
+  return resolvedText;
+};
+
+// Enhance the prompt editor with variable highlighting
+const enhancePromptEditor = (textarea) => {
+  // Create a wrapper for the editor
+  const editorWrapper = createElement('div', 'editor-wrapper relative');
+  
+  // Create a hidden div for highlighting
+  const highlighter = createElement('div', 'highlighter absolute inset-0 pointer-events-none p-6 whitespace-pre-wrap');
+  highlighter.setAttribute('aria-hidden', 'true');
+  
+  // Style the textarea to overlay the highlighter
+  textarea.className += ' editor-textarea absolute inset-0 bg-transparent';
+  
+  // Function to update highlighting
+  const updateHighlighting = () => {
+    let content = textarea.value || '';
+    
+    // Replace variables with highlighted spans
+    content = content.replace(/\{\{([^}]+)\}\}/g, 
+      '<span class="variable-highlight bg-blue-100 dark:bg-blue-900 px-1 rounded">{{$1}}</span>'
+    );
+    
+    highlighter.innerHTML = content;
+  };
+  
+  // Add event listeners
+  textarea.addEventListener('input', updateHighlighting);
+  textarea.addEventListener('scroll', () => {
+    highlighter.scrollTop = textarea.scrollTop;
+  });
+  
+  // Initial highlighting
+  updateHighlighting();
+  
+  // Assemble the editor
+  editorWrapper.appendChild(highlighter);
+  editorWrapper.appendChild(textarea);
+  
+  // Replace the textarea with our enhanced editor
+  textarea.parentNode.replaceChild(editorWrapper, textarea);
+  
+  // Ensure we can still reference the textarea after enhancement
+  return textarea;
+};
+
+// -------------------------------------------------------------------------
+// End of Variable System - New Code
+
 // Settings Modal Functions
 const initializeSettings = () => {
   const apiKey = localStorage.getItem('openai_api_key');
@@ -299,6 +688,13 @@ document.addEventListener('DOMContentLoaded', () => {
     onAdd: function (evt) {
       const item = evt.item;
       addRemoveButton(item);
+      
+      // Generate a unique ID for this chain item
+      item.dataset.id = `chain-item-${Date.now()}`;
+      
+      // Check for variables and add mapping UI if needed
+      createVariableMappingUI(item);
+      
       updateChainUI();
     },
     onRemove: function () {
@@ -306,8 +702,20 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     onSort: function () {
       updateChainUI();
+      
+      // Update variable mappings for all items
+      Array.from(chainedPromptList.children).forEach(item => {
+        const variableMappingContainer = item.querySelector('.variable-mapping-container');
+        if (variableMappingContainer) {
+          variableMappingContainer.remove();
+          createVariableMappingUI(item);
+        }
+      });
     }
   });
+
+  // Skip enhancement for the new prompt modal textarea to avoid display issues
+  // The textarea in the modal should remain simple and functional
 
   updateChainUI();
   initializeSettings();
@@ -374,31 +782,45 @@ async function getAIResponse(prompt) {
   }
 }
 
-// Run Chain Handler
+// Run Chain Handler - Updated to support variables
 async function handleRunChain(initialInput) {
   try {
       console.log('Starting handleRunChain with initial input:', initialInput);
-      const prompts = Array.from(chainedPromptList?.children || []).map(item => {
-          const promptTitle = item.querySelector('.prompt-title');
-          return promptTitle ? promptTitle.innerText : null;
-      }).filter(prompt => prompt !== null);
-
-      if (prompts.length === 0) {
+      
+      // Store all responses by step ID for reference
+      const stepResponses = new Map();
+      stepResponses.set("initial", initialInput);
+      
+      // Get chain items
+      const chainItems = Array.from(chainedPromptList?.children || []);
+      
+      if (chainItems.length === 0) {
           return;
       }
 
-      let input = initialInput; // Use the main prompt's response as initial input
-
-      for (let i = 0; i < prompts.length; i++) {
-          const prompt = prompts[i];
-          console.log(`Processing chain prompt ${i + 1}:`, prompt);
+      let previousOutput = initialInput; // Start with the main prompt's output
+      
+      for (let i = 0; i < chainItems.length; i++) {
+          const item = chainItems[i];
+          const promptText = item.getAttribute('data-prompt');
+          const variableMappingsStr = item.getAttribute('data-variable-mappings');
+          const variableMappings = variableMappingsStr ? JSON.parse(variableMappingsStr) : [];
+          
+          console.log(`Processing chain prompt ${i + 1}:`, promptText);
+          console.log('Variable mappings:', variableMappings);
 
           try {
-              // Display the current prompt
-              addMessage('user', `Chain Step ${i + 1}: ${prompt}`);
+              // Resolve variables in the prompt
+              const resolvedPrompt = await resolveVariables(promptText, variableMappings, stepResponses);
+              
+              // Combine the resolved prompt with the previous output for context
+              const contextualPrompt = `${resolvedPrompt}\n\nPrevious output to work with:\n${previousOutput}`;
+              
+              // Display the resolved prompt (without the previous output for cleaner display)
+              addMessage('user', `Chain Step ${i + 1}: ${resolvedPrompt}`);
 
-              // Create messages for this step
-              const messages = [{ role: "user", content: `${prompt}\n\nInput: ${input}` }];
+              // Create messages for this step with the contextual prompt
+              const messages = [{ role: "user", content: contextualPrompt }];
 
               // Get streaming response
               const stream = await sendPromptToOpenAI(messages);
@@ -408,8 +830,11 @@ async function handleRunChain(initialInput) {
               const response = await streamResponse(reader);
               console.log(`Received chain response for prompt ${i + 1}:`, response);
 
-              // Use this response as input for the next prompt
-              input = response;
+              // Store this response for potential use by later steps
+              stepResponses.set(item.dataset.id, response);
+              
+              // Update previousOutput for the next iteration
+              previousOutput = response;
           } catch (innerError) {
               console.error(`Error processing chain prompt ${i + 1}:`, innerError);
               addMessage('ai', `Error: ${innerError.message}`);
@@ -583,6 +1008,7 @@ const handleRun = async () => {
   }
 };
 
+// Send prompt to OpenAI GPT-4.1
 const sendPromptToOpenAI = async (messages) => {
   const apiKey = localStorage.getItem('openai_api_key');
   if (!apiKey) {
@@ -590,10 +1016,10 @@ const sendPromptToOpenAI = async (messages) => {
   }
 
   const requestBody = {
-    model: "gpt-4o-mini",
+    model: "gpt-4.1-mini-2025-04-14", // GPT-4.1 model name for OpenAI
     messages,
     stream: true,
-    max_tokens: 4096,
+    // max_tokens: 4096,
   };
 
   try {
@@ -613,7 +1039,7 @@ const sendPromptToOpenAI = async (messages) => {
 
     return response.body;
   } catch (error) {
-    console.error("API request failed:", error);
+    console.error("OpenAI API request failed:", error);
     throw new Error(`Request failed: ${error.message}`);
   }
 };
@@ -717,11 +1143,14 @@ const copyToClipboard = (text, element) => {
 
 const openNewPromptModal = () => {
   newPromptModal.classList.remove('hidden');
+  newPromptModal.style.display = 'flex';
+  newPromptText.value = ''; // Clear any previous text
   newPromptText.focus();
 };
 
 const closeNewPromptModal = () => {
   newPromptModal.classList.add('hidden');
+  newPromptModal.style.display = 'none';
   newPromptText.value = '';
 };
 
@@ -759,8 +1188,17 @@ const handleInputKeyDown = (e) => {
   }
 };
 
-document.addEventListener('DOMContentLoaded', renderPrompts);
-document.addEventListener('DOMContentLoaded', initializeTheme);
+document.addEventListener('DOMContentLoaded', () => {
+  renderPrompts();
+  initializeTheme();
+  
+  // Ensure modal is properly initialized
+  const modal = document.getElementById('new-prompt-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+});
 
 newPromptBtn.addEventListener('click', openNewPromptModal);
 cancelBtn.addEventListener('click', closeNewPromptModal);
@@ -861,3 +1299,54 @@ const addRemoveButton = (item) => {
     updateChainUI();
   });
 };
+
+// Add click outside to close functionality
+newPromptModal.addEventListener('click', (e) => {
+  if (e.target === newPromptModal) {
+    closeNewPromptModal();
+  }
+});
+
+// Add escape key to close functionality
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !newPromptModal.classList.contains('hidden')) {
+    closeNewPromptModal();
+  }
+});
+
+// Add CSS for variable highlighting
+document.addEventListener('DOMContentLoaded', () => {
+  const style = document.createElement('style');
+  style.textContent = `
+    .editor-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    
+    .highlighter {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: transparent;
+      overflow: auto;
+    }
+    
+    .editor-textarea {
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      background: transparent;
+      color: inherit;
+      resize: none;
+      overflow: auto;
+    }
+    
+    .variable-highlight {
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+  `;
+  document.head.appendChild(style);
+});
