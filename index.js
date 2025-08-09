@@ -1016,7 +1016,7 @@ const sendPromptToOpenAI = async (messages) => {
   }
 
   const requestBody = {
-    model: "gpt-4.1-mini-2025-04-14", // GPT-4.1 model name for OpenAI
+    model: "gpt-4.1-mini-2025-04-14", // GPT-4.1-mini model name for OpenAI
     messages,
     stream: true,
     // max_tokens: 4096,
