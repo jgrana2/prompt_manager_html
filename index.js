@@ -195,36 +195,57 @@ const createVariableMappingRow = (variable, mapping, chainItem) => {
 // Update source details based on source type
 const updateSourceDetails = (container, source, chainItem) => {
   container.innerHTML = '';
-  
+
   switch (source.type) {
     case 'manual':
       const defaultInput = createElement('input', 'text-xs p-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800');
       defaultInput.type = 'text';
       defaultInput.placeholder = 'Default value (optional)';
       defaultInput.value = source.defaultValue || '';
-      
+
       defaultInput.addEventListener('change', () => {
         source.defaultValue = defaultInput.value;
-        
+
         // Update the variable mappings in the chain item
         const variableMappings = JSON.parse(chainItem.getAttribute('data-variable-mappings') || '[]');
-        const mapping = variableMappings.find(m => m.source === source);
+        // Find mapping by variable name instead of source object
+        // Find the variable name for this mapping
+        // We can infer the variable name by finding the mapping whose source is this source, but that's fragile.
+        // Instead, the caller of updateSourceDetails should pass the variable name if possible, but we can try to infer it.
+        // However, since in createVariableMappingRow we have access to the variable, we can use closure there.
+        // Here, try to find by variable name if possible.
+        // We'll try to get the variable name from the parent row if possible.
+        // But for now, let's use the same logic as elsewhere:
+        // Find the mapping where m.variable === variable.name
+        // We'll extract variable name from the mapping whose source is this source, fallback to first mapping with this source.
+        let variableName = null;
+        // Try to find variable name by searching for mapping with this source
+        let mappingBySource = variableMappings.find(m => m.source === source);
+        if (mappingBySource) {
+          variableName = mappingBySource.variable;
+        }
+        // If not found, fallback to first mapping
+        if (!variableName && variableMappings.length > 0) {
+          variableName = variableMappings[0].variable;
+        }
+        // Now, find mapping by variable name
+        const mapping = variableMappings.find(m => m.variable === variableName);
         if (mapping) {
           mapping.source.defaultValue = defaultInput.value;
           chainItem.setAttribute('data-variable-mappings', JSON.stringify(variableMappings));
         }
       });
-      
+
       container.appendChild(defaultInput);
       break;
-      
+
     case 'step':
       const stepSelect = createElement('select', 'text-xs p-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800');
-      
+
       // Add options for all previous steps
       const allItems = Array.from(document.querySelectorAll('#chained-prompt-list li'));
       const currentIndex = allItems.indexOf(chainItem);
-      
+
       for (let i = 0; i < currentIndex; i++) {
         const item = allItems[i];
         const stepNumber = i + 1;
@@ -234,62 +255,80 @@ const updateSourceDetails = (container, source, chainItem) => {
         option.textContent = `Step ${stepNumber}: ${stepTitle.substring(0, 20)}...`;
         stepSelect.appendChild(option);
       }
-      
+
       if (source.stepId) {
         stepSelect.value = source.stepId;
       } else if (stepSelect.options.length > 0) {
         source.stepId = stepSelect.options[0].value;
       }
-      
+
       stepSelect.addEventListener('change', () => {
         source.stepId = stepSelect.value;
-        
+
         // Update the variable mappings in the chain item
         const variableMappings = JSON.parse(chainItem.getAttribute('data-variable-mappings') || '[]');
-        const mapping = variableMappings.find(m => m.source === source);
+        // Find mapping by variable name instead of source object
+        let variableName = null;
+        let mappingBySource = variableMappings.find(m => m.source === source);
+        if (mappingBySource) {
+          variableName = mappingBySource.variable;
+        }
+        if (!variableName && variableMappings.length > 0) {
+          variableName = variableMappings[0].variable;
+        }
+        const mapping = variableMappings.find(m => m.variable === variableName);
         if (mapping) {
           mapping.source.stepId = stepSelect.value;
           chainItem.setAttribute('data-variable-mappings', JSON.stringify(variableMappings));
         }
       });
-      
+
       container.appendChild(stepSelect);
       break;
-      
+
     case 'system':
       const systemVarSelect = createElement('select', 'text-xs p-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800');
-      
+
       const systemVars = [
         { value: 'date', text: 'Current Date' },
         { value: 'time', text: 'Current Time' },
         { value: 'datetime', text: 'Date and Time' }
       ];
-      
+
       systemVars.forEach(sysVar => {
         const option = document.createElement('option');
         option.value = sysVar.value;
         option.textContent = sysVar.text;
         systemVarSelect.appendChild(option);
       });
-      
+
       if (source.variable) {
         systemVarSelect.value = source.variable;
       } else {
         source.variable = systemVars[0].value;
       }
-      
+
       systemVarSelect.addEventListener('change', () => {
         source.variable = systemVarSelect.value;
-        
+
         // Update the variable mappings in the chain item
         const variableMappings = JSON.parse(chainItem.getAttribute('data-variable-mappings') || '[]');
-        const mapping = variableMappings.find(m => m.source === source);
+        // Find mapping by variable name instead of source object
+        let variableName = null;
+        let mappingBySource = variableMappings.find(m => m.source === source);
+        if (mappingBySource) {
+          variableName = mappingBySource.variable;
+        }
+        if (!variableName && variableMappings.length > 0) {
+          variableName = variableMappings[0].variable;
+        }
+        const mapping = variableMappings.find(m => m.variable === variableName);
         if (mapping) {
           mapping.source.variable = systemVarSelect.value;
           chainItem.setAttribute('data-variable-mappings', JSON.stringify(variableMappings));
         }
       });
-      
+
       container.appendChild(systemVarSelect);
       break;
   }
@@ -958,10 +997,23 @@ const handleRun = async () => {
   }
   const mainPrompt = mainPromptElement.textContent.trim();
 
+  // --- Variable resolution for main prompt ---
+  let mainPromptToUse = mainPrompt;
+  const variablesInMain = extractVariables(mainPrompt);
+  if (variablesInMain.length > 0) {
+    const variableMappingsForMain = variablesInMain.map(v => ({
+      variable: v.name,
+      source: { type: 'manual', defaultValue: v.defaultValue || '' }
+    }));
+    const resolvedMainPrompt = await resolveVariables(mainPrompt, variableMappingsForMain, new Map());
+    mainPromptToUse = resolvedMainPrompt;
+  }
+  // --- End variable resolution for main prompt ---
+
   // Process main prompt first
   const formattedInput = `:"""${userInput}"""`;
   messages = [
-      { role: "system", content: mainPrompt },
+      { role: "system", content: mainPromptToUse },
       { role: "user", content: formattedInput }
   ];
 
