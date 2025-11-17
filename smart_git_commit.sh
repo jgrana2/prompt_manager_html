@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 # Configuration
 API_KEY="${OPENAI_API_KEY:-}"
 API_URL="https://api.openai.com/v1/chat/completions"
-MODEL="gpt-4.1-mini-2025-04-14"
+MODEL="gpt-5-nano-2025-08-07"
 
 # Function to print colored output
 print_section() {

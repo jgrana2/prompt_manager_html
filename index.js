@@ -1060,7 +1060,7 @@ const handleRun = async () => {
   }
 };
 
-// Send prompt to OpenAI GPT-4.1
+// Send prompt to OpenAI GPT-5.1
 const sendPromptToOpenAI = async (messages) => {
   const apiKey = localStorage.getItem('openai_api_key');
   if (!apiKey) {
@@ -1068,7 +1068,7 @@ const sendPromptToOpenAI = async (messages) => {
   }
 
   const requestBody = {
-    model: "gpt-4.1-mini-2025-04-14", // GPT-4.1-mini model name for OpenAI
+    model: "gpt-5-nano-2025-08-07",
     messages,
     stream: true,
     // max_tokens: 4096,
